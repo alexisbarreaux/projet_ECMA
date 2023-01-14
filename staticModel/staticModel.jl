@@ -5,7 +5,7 @@ include("../utils/utils.jl")
 
 # staticSolve("10_ulysses_3.tsp")
 
-function staticSolve(inputFile::String)::String
+function staticSolve(inputFile::String, showResult::Bool= false)::Any
     """
     The source file includes the following variables:
         - n : number of nodes,
@@ -53,8 +53,24 @@ function staticSolve(inputFile::String)::String
     isOptimal = termination_status(model) == MOI.OPTIMAL
     if feasibleSolutionFound
     # Récupération des valeurs d’une variable
-        return "Success, nodes : " * string(JuMP.node_count(model))* ", Time : "* string(optimize_time) * " value " * string(round(Int, JuMP.objective_value(model)))
+        println("Success, nodes : " * string(JuMP.node_count(model))* ", Time : "* string(round(optimize_time, digits= 5)) * " Value : " * string(round(Int, JuMP.objective_value(model))))
     else
-        return "Not feasible"
+        println("Not feasible!!")
     end
+
+    result = JuMP.value.(y)
+    if showResult
+
+        createdParts = Dict{Int, Array}(k => [] for k in 1:K)
+        for i in 1:n
+            for k in 1:K
+                if result[i,k] == 1
+                    createdParts[k] = vcat(createdParts[k],[i])
+                    break
+                end
+            end
+        end
+        println("Found parts are : ", createdParts)
+    end
+    return result
 end
