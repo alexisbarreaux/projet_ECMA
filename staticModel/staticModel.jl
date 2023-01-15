@@ -9,13 +9,13 @@ function staticSolve(inputFile::String, showResult::Bool= false)::Any
     """
     The source file includes the following variables:
         - n : number of nodes,
-        - L :
-        - W :
+        - L : bound on the total uncertainty on the lengths,
+        - W : bound on the total uncertainty for the weights,
         - K : number of parts in which to split the graph,
         - B : capacity constraints on the parts,
         - w_v : weights of the nodes,
-        - W_v : 
-        - lh :
+        - W_v : bound on the uncertainty of the weight for each node
+        - lh : lengths linked to the uncertainty on lengths for each node.
         - coordinates : coordinates of our points/nodes.
     """
     println("Used input file is : ", inputFile)
