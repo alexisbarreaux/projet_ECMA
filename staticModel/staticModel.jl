@@ -4,6 +4,13 @@ include("../utils/constants.jl")
 include("../utils/utils.jl")
 
 # staticSolve("10_ulysses_3.tsp")
+function solveAndStoreAllInstancesStatic()::Dict{String, Float64}
+    staticValues = Dict{String, Float64}()
+    for inputFile in DATA_FILES[1:3]
+        staticValues[inputFile] = staticSolve(inputFile)
+    end
+    return staticValues
+end
 
 function staticSolve(inputFile::String, showResult::Bool= false)::Any
     """
@@ -18,7 +25,7 @@ function staticSolve(inputFile::String, showResult::Bool= false)::Any
         - lh : lengths linked to the uncertainty on lengths for each node.
         - coordinates : coordinates of our points/nodes.
     """
-    println("Used input file is : ", inputFile)
+    println("Solving ", inputFile, " in static mode.")
     # Directly load data file
     include(DATA_DIR_PATH * "\\" * inputFile)
 
@@ -53,24 +60,26 @@ function staticSolve(inputFile::String, showResult::Bool= false)::Any
     isOptimal = termination_status(model) == MOI.OPTIMAL
     if feasibleSolutionFound
     # Récupération des valeurs d’une variable
-        println("Success, nodes : " * string(JuMP.node_count(model))* ", Time : "* string(round(optimize_time, digits= 5)) * " Value : " * string(round(Int, JuMP.objective_value(model))))
-    else
-        println("Not feasible!!")
-    end
-
-    result = JuMP.value.(y)
-    if showResult
-
-        createdParts = Dict{Int, Array}(k => [] for k in 1:K)
-        for i in 1:n
-            for k in 1:K
-                if result[i,k] == 1
-                    createdParts[k] = vcat(createdParts[k],[i])
-                    break
+        result = JuMP.value.(y)
+        value = JuMP.objective_value(model)
+        
+        println("Success, nodes : " * string(JuMP.node_count(model))* ", Time : "* string(round(optimize_time, digits= 5)) * " Value : " * string(round(value, digits=4)))
+        if showResult
+            createdParts = Dict{Int, Array}(k => [] for k in 1:K)
+            for i in 1:n
+                for k in 1:K
+                    if result[i,k] == 1
+                        createdParts[k] = vcat(createdParts[k],[i])
+                        break
+                    end
                 end
             end
+            println("Found parts are : ", createdParts)
         end
-        println("Found parts are : ", createdParts)
+        return value
+    else
+        println("Not feasible!!")
+        return
     end
-    return result
+
 end
