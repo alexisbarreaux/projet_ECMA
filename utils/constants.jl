@@ -1,5 +1,8 @@
 UTILS_DIR_PATH = @__DIR__
 
+RESULTS_DIR_PATH = dirname(UTILS_DIR_PATH) * "\\results"
+STATIC_RESULTS_FILE = "static.json"
+
 DATA_DIR_PATH = dirname(UTILS_DIR_PATH) * "\\data"
 DATA_FILES = ["100_kroA_3.tsp", "100_kroA_6.tsp", "100_kroA_9.tsp", "10_ulysses_3.tsp", "10_ulysses_6.tsp", 
 "10_ulysses_9.tsp", "14_burma_3.tsp", "14_burma_6.tsp", "14_burma_9.tsp", "202_gr_3.tsp", "202_gr_6.tsp",

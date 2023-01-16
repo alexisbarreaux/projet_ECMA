@@ -1,18 +1,27 @@
 using JuMP
 using CPLEX
+
 include("../utils/constants.jl")
-include("../utils/utils.jl")
+include("../utils/instancesUtils.jl")
+include("../utils/jsonUtils.jl")
 
 # staticSolve("10_ulysses_3.tsp")
-function solveAndStoreAllInstancesStatic()::Dict{String, Float64}
+function solveAndReturnAllInstancesStatic()::Dict{String, Float64}
     staticValues = Dict{String, Float64}()
-    for inputFile in DATA_FILES[1:3]
+    for inputFile in DATA_FILES
         staticValues[inputFile] = staticSolve(inputFile)
     end
     return staticValues
 end
 
-function staticSolve(inputFile::String, showResult::Bool= false)::Any
+function solveAndStoreAllInstancesStatic(resultFile::String=STATIC_RESULTS_FILE)::Nothing
+    staticValues = solveAndReturnAllInstancesStatic()
+    filePath =RESULTS_DIR_PATH * "\\" * resultFile
+    jsonDropToFile(filePath, staticValues)
+end
+
+
+function staticSolve(inputFile::String, showResult::Bool= false, silent::Bool=true)::Any
     """
     The source file includes the following variables:
         - n : number of nodes,
@@ -33,6 +42,9 @@ function staticSolve(inputFile::String, showResult::Bool= false)::Any
 
     # Creating the model
     model = Model(CPLEX.Optimizer)
+    if silent
+        set_silent(model)
+    end
 
     # Variables
     @variable(model, x[i in 1:n, j in 1:n], Bin)
@@ -63,8 +75,8 @@ function staticSolve(inputFile::String, showResult::Bool= false)::Any
         result = JuMP.value.(y)
         value = JuMP.objective_value(model)
         
-        println("Success, nodes : " * string(JuMP.node_count(model))* ", Time : "* string(round(optimize_time, digits= 5)) * " Value : " * string(round(value, digits=4)))
         if showResult
+            println("Success, nodes : " * string(JuMP.node_count(model))* ", Time : "* string(round(optimize_time, digits= 5)) * " Value : " * string(round(value, digits=4)))
             createdParts = Dict{Int, Array}(k => [] for k in 1:K)
             for i in 1:n
                 for k in 1:K
