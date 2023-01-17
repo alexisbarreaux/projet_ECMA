@@ -6,6 +6,8 @@ include("../utils/instancesUtils.jl")
 include("../utils/jsonUtils.jl")
 
 # staticSolve("10_ulysses_3.tsp")
+# Expected result :  {1, 5, 8} {2, 3, 4}, {6, 7, 9, 10} 
+# Expected value : 54.354823588
 function solveAndReturnAllInstancesStatic()::Dict{String, Float64}
     staticValues = Dict{String, Float64}()
     for inputFile in DATA_FILES
@@ -52,13 +54,13 @@ function staticSolve(inputFile::String, showResult::Bool= false, silent::Bool=tr
 
     # Objective
     # We only sum on i < j as per how the subject specified it on an example
-    @objective(model, Max, sum(x[i,j] * l[i,j] for i in 1:n for j in i+1:n))
+    @objective(model, Min, sum(x[i,j] * l[i,j] for i in 1:n for j in 1:n))
     
     # Constraints
     # Weights of the parts
     @constraint(model, [k in 1:K], sum(w_v[i]*y[i,k] for i in 1:n) <= B)
     # Triangular inequalities between x and y
-    @constraint(model, [k in 1:K, i in 1:n, j in i+1:n], y[i,k] + y[j,k] <= x[i,j] + 1)
+    @constraint(model, [k in 1:K, i in 1:n, j in i:n], y[i,k] + y[j,k] <= x[i,j] + 1)
     # Each node is in a part
     @constraint(model, [i in 1:n],  sum(y[i,k] for k in 1:K) == 1)
 
