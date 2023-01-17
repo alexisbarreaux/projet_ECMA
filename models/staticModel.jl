@@ -5,6 +5,7 @@ include("../utils/constants.jl")
 include("../utils/instancesUtils.jl")
 include("../utils/jsonUtils.jl")
 
+# include("models/staticModel.jl")
 # staticSolve("10_ulysses_3.tsp")
 # Expected result :  {1, 5, 8} {2, 3, 4}, {6, 7, 9, 10} 
 # Expected value : 54.354823588

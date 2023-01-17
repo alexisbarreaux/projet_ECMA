@@ -5,6 +5,7 @@ include("../utils/constants.jl")
 include("../utils/instancesUtils.jl")
 include("../utils/jsonUtils.jl")
 
+# include("models/dualModel.jl")
 # dualSolve("10_ulysses_3.tsp")
 function solveAndReturnAllInstancesDual()::Dict{String, Float64}
     dualValues = Dict{String, Float64}()
@@ -34,7 +35,7 @@ function dualSolve(inputFile::String, showResult::Bool= false, silent::Bool=true
         - lh : lengths linked to the uncertainty on lengths for each node.
         - coordinates : coordinates of our points/nodes.
     """
-    println("Solving ", inputFile, " in static mode.")
+    println("Solving ", inputFile, " in dual mode.")
     # Directly load data file
     include(DATA_DIR_PATH * "\\" * inputFile)
 
@@ -57,7 +58,7 @@ function dualSolve(inputFile::String, showResult::Bool= false, silent::Bool=true
 
     # Objective
     # We only sum on i < j as per how the subject specified it on an example
-    @objective(model, Max, sum((x[i,j] * l[i,j]) + 3*beta[i,j] for i in 1:n for j in i+1:n) + L*alpha)
+    @objective(model, Min, sum((x[i,j] * l[i,j]) + 3*beta[i,j] for i in 1:n for j in i+1:n) + L*alpha)
     
     # Constraints
     # Triangular inequalities between x and y
