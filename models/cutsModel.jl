@@ -9,6 +9,7 @@ include("../utils/jsonUtils.jl")
 include("models/cutsModel.jl")
 cutsSolve("10_ulysses_3.tsp")
 """
+# TODO on 10_ulysses_3 and 10_ulysses_6 the cut solve has a value that is equal too dual + 2 :O
 
 function solveAndReturnAllInstancesCuts()::Dict{String, Float64}
     cutsValues = Dict{String, Float64}()
@@ -107,7 +108,7 @@ function cutSolve(inputFile::String, showResult::Bool= false, silent::Bool=true)
     # Triangular inequalities between x and y
     @constraint(model, [k in 1:K, i in 1:n, j in i:n], y[i,k] + y[j,k] <= x[i,j] + 1)
     # Each node is in a part
-    @constraint(model, [i in 1:n],  sum(y[i,k] for k in 1:K) == 1)
+    @constraint(model, [i in 1:n], sum(y[i,k] for k in 1:K) == 1)
     # New constraints for cut
     # Rewriting of the objective
     @constraint(model,z >=  sum(x[i,j] * l[i,j] for i in 1:n for j in 1:n))
@@ -136,9 +137,12 @@ function cutSolve(inputFile::String, showResult::Bool= false, silent::Bool=true)
 
             for k in 1:K 
                 z_2_k, delta_2_k = secondKSubProblem(y_val, k, n, w_v, W_v, W)
-                if z_2_k > B 
-                    cstr = @build_constraint(sum( w_v[i]* (1 + delta_2_k[i]) * y[i,k] for i in 1:n) <= B)
-                    MOI.submit(model, MOI.LazyConstraint(cb_data), cstr)
+                if z_2_k > B
+                    # Add all cuts or only for the most violated one ?
+                    for k_2 in 1:K
+                        cstr = @build_constraint(sum( w_v[i]* (1 + delta_2_k[i]) * y[i,k_2] for i in 1:n) <= B)
+                        MOI.submit(model, MOI.LazyConstraint(cb_data), cstr)
+                    end
                 end
             end
 
