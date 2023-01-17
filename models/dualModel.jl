@@ -57,7 +57,6 @@ function dualSolve(inputFile::String, showResult::Bool= false, silent::Bool=true
     @variable(model, gamma[k in 1:K] >= 0)
 
     # Objective
-    # We only sum on i < j as per how the subject specified it on an example
     @objective(model, Min, sum((x[i,j] * l[i,j]) + 3*beta[i,j] for i in 1:n for j in i+1:n) + L*alpha)
     
     # Constraints

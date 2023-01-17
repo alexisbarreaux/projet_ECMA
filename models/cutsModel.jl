@@ -5,26 +5,24 @@ include("../utils/constants.jl")
 include("../utils/instancesUtils.jl")
 include("../utils/jsonUtils.jl")
 
-# include("models/staticModel.jl")
-# staticSolve("10_ulysses_3.tsp")
-# Expected result :  {1, 5, 8} {2, 3, 4}, {6, 7, 9, 10} 
-# Expected value : 54.354823588
-function solveAndReturnAllInstancesStatic()::Dict{String, Float64}
-    staticValues = Dict{String, Float64}()
+# include("models/cutsModel.jl")
+# cutsSolve("10_ulysses_3.tsp")
+function solveAndReturnAllInstancesCuts()::Dict{String, Float64}
+    cutsValues = Dict{String, Float64}()
     for inputFile in DATA_FILES
-        staticValues[inputFile] = staticSolve(inputFile)
+        cutsValues[inputFile] = cutsSolve(inputFile)
     end
-    return staticValues
+    return cutsValues
 end
 
-function solveAndStoreAllInstancesStatic(resultFile::String=STATIC_RESULTS_FILE)::Nothing
-    staticValues = solveAndReturnAllInstancesStatic()
+function solveAndStoreAllInstancesStatic(resultFile::String=DUAL_RESULTS_FILE)::Nothing
+    cutsValues = solveAndReturnAllInstancesCuts()
     filePath =RESULTS_DIR_PATH * "\\" * resultFile
-    jsonDropToFile(filePath, staticValues)
+    jsonDropToFile(filePath, cutsValues)
 end
 
 
-function staticSolve(inputFile::String, showResult::Bool= false, silent::Bool=true)::Any
+function cutsSolve(inputFile::String, showResult::Bool= false, silent::Bool=true)::Any
     """
     The source file includes the following variables:
         - n : number of nodes,
@@ -37,7 +35,7 @@ function staticSolve(inputFile::String, showResult::Bool= false, silent::Bool=tr
         - lh : lengths linked to the uncertainty on lengths for each node.
         - coordinates : coordinates of our points/nodes.
     """
-    println("Solving ", inputFile, " in static mode.")
+    println("Solving ", inputFile, " in cuts mode.")
     # Directly load data file
     include(DATA_DIR_PATH * "\\" * inputFile)
 
@@ -52,17 +50,24 @@ function staticSolve(inputFile::String, showResult::Bool= false, silent::Bool=tr
     # Variables
     @variable(model, x[i in 1:n, j in 1:n], Bin)
     @variable(model, y[i in 1:n, k in 1:K], Bin)
+    # New variables for cuts
+    @variable(model, z >= 0)
+    # Also "variables" but not handled by the model
+    U_1 = [l]
+    U_2 = [w_v]
 
     # Objective
-    @objective(model, Min, sum(x[i,j] * l[i,j] for i in 1:n for j in 1:n))
+    @objective(model, Min, z)
     
-    # Constraints
-    # Weights of the parts
-    @constraint(model, [k in 1:K], sum(w_v[i]*y[i,k] for i in 1:n) <= B)
     # Triangular inequalities between x and y
     @constraint(model, [k in 1:K, i in 1:n, j in i:n], y[i,k] + y[j,k] <= x[i,j] + 1)
     # Each node is in a part
     @constraint(model, [i in 1:n],  sum(y[i,k] for k in 1:K) == 1)
+    # New constraints for cut
+    # Rewriting of the objective
+    @constraint(model, [l_1 in U_1],z >=  sum(x[i,j] * l_1[i,j]))
+    # Weights of the parts
+    @constraint(model, [w_2 in U_2], sum(w_2[i]*y[i,k] for i in 1:n) <= B)
 
     # Solve
     start = time()
