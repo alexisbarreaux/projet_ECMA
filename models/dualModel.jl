@@ -5,9 +5,12 @@ include("../utils/constants.jl")
 include("../utils/instancesUtils.jl")
 include("../utils/jsonUtils.jl")
 
-# include("models/dualModel.jl")
-# dualSolve("10_ulysses_3.tsp")
-function solveAndReturnAllInstancesDual()::Dict{String, Float64}
+"""
+include("models/dualModel.jl")
+dualSolve("10_ulysses_3.tsp")
+"""
+
+ function solveAndReturnAllInstancesDual()::Dict{String, Float64}
     dualValues = Dict{String, Float64}()
     for inputFile in DATA_FILES
         dualValues[inputFile] = dualSolve(inputFile)
