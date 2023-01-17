@@ -15,8 +15,8 @@ function solveAndReturnAllInstancesDual()::Dict{String, Float64}
     return dualValues
 end
 
-function solveAndStoreAllInstancesStatic(resultFile::String=DUAL_RESULTS_FILE)::Nothing
-    dualValues = solveAndReturnAllInstancesStatic()
+function solveAndStoreAllInstancesDual(resultFile::String=DUAL_RESULTS_FILE)::Nothing
+    dualValues = solveAndReturnAllInstancesDual()
     filePath =RESULTS_DIR_PATH * "\\" * resultFile
     jsonDropToFile(filePath, dualValues)
 end
@@ -50,7 +50,7 @@ function dualSolve(inputFile::String, showResult::Bool= false, silent::Bool=true
     # Variables
     @variable(model, x[i in 1:n, j in 1:n], Bin)
     @variable(model, y[i in 1:n, k in 1:K], Bin)
-    # TODO Is beta/alpha int or float, positive ?
+    # New constraints added for the dual
     @variable(model, beta[i in 1:n, j in 1:n] >= 0)
     @variable(model, alpha >= 0)
     @variable(model, dzeta[i in 1:n, k in 1:K] >= 0)
