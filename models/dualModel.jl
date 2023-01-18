@@ -51,28 +51,31 @@ function dualSolve(inputFile::String, showResult::Bool= false, silent::Bool=true
     end
 
     # Variables
-    @variable(model, x[i in 1:n, j in 1:n], Bin)
+    @variable(model, x[i in 1:n, j in i+1:n], Bin)
     @variable(model, y[i in 1:n, k in 1:K], Bin)
     # New constraints added for the dual
-    @variable(model, beta[i in 1:n, j in 1:n] >= 0)
-    @variable(model, alpha >= 0)
-    @variable(model, dzeta[i in 1:n, k in 1:K] >= 0)
-    @variable(model, gamma[k in 1:K] >= 0)
+    @variable(model, beta[i in 1:n, j in i+1:n] >= 0.)
+    @variable(model, alpha >= 0.)
+    @variable(model, dzeta[i in 1:n, k in 1:K] >= 0.)
+    @variable(model, gamma[k in 1:K] >= 0.)
 
     # Objective
-    @objective(model, Min, sum((x[i,j] * l[i,j]) + 3*beta[i,j] for i in 1:n for j in i:n if i != j) + L*alpha)
+    @objective(model, Min, sum((x[i,j] * l[i,j]) + 3*beta[i,j] for i in 1:n for j in i+1:n) + L*alpha)
     
     # Constraints
     # Triangular inequalities between x and y
-    @constraint(model, [k in 1:K, i in 1:n, j in i:n], y[i,k] + y[j,k] <= x[i,j] + 1)
+    @constraint(model, [k in 1:K, i in 1:n, j in i+1:n], y[i,k] + y[j,k] <= x[i,j] + 1)
     # Each node is in a part
     @constraint(model, [i in 1:n],  sum(y[i,k] for k in 1:K) == 1)
     # Link between alpha, beta and x (comes from first dual on objective)
-    @constraint(model, [i in 1:n, j in i:n], alpha + beta[i,j] >= (lh[i] + lh[j])*x[i,j])
+    @constraint(model, [i in 1:n, j in i+1:n], alpha + beta[i,j] >= (lh[i] + lh[j])*x[i,j])
     # Constraint on the parts from the robust one dualized
     @constraint(model, [k in 1:K], (sum(w_v[i]*y[i,k] + W_v[i] * dzeta[i,k] for i in 1:n) + W*gamma[k]) <= B)
     # Constraint from the second dual
     @constraint(model, [i in 1:n, k in 1:K], (gamma[k] + dzeta[i,k]) >= w_v[i]*y[i,k])    
+
+    # First node can be put anywhere
+    @constraint(model, y[1,1] ==1)
 
     # Solve
     start = time()

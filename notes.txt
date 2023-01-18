@@ -1,0 +1,1 @@
+cassage de symétrie : le premier noeud peut être fixé dans le premier groupe, ça ne change rien

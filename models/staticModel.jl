@@ -70,6 +70,9 @@ function staticSolve(inputFile::String, showResult::Bool= false, silent::Bool=tr
     # Each node is in a part
     @constraint(model, [i in 1:n],  sum(y[i,k] for k in 1:K) == 1)
 
+    # First node can be put anywhere
+    @constraint(model, y[1,1] ==1)
+
     # Solve
     start = time()
     optimize!(model)
