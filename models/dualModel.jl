@@ -8,6 +8,9 @@ include("../utils/jsonUtils.jl")
 """
 include("models/dualModel.jl")
 dualSolve("10_ulysses_3.tsp")
+
+Solution robuste : {1, 2, 3, 10}, {4, 6, 7, 8}, {5, 9}
+(objectif : 136.995276296)
 """
 
  function solveAndReturnAllInstancesDual()::Dict{String, Float64}

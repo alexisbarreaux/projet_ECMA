@@ -7,7 +7,7 @@ include("../utils/jsonUtils.jl")
 
 """
 include("models/cutsModel.jl")
-cutsSolve("10_ulysses_3.tsp")
+cutSolve("10_ulysses_3.tsp")
 """
 # TODO on 10_ulysses_3 and 10_ulysses_6 the cut solve has a value that is equal too dual + 2 :O
 
@@ -37,10 +37,10 @@ function firstSubProblem(x_val::Matrix{Float64},n::Int64, l::Matrix{Float64}, lh
     @variable(sub_model, 0. <= delta_1[i in 1:n, j in 1:n] <= 3.)
 
     ##### Objective #####
-    @objective(sub_model, Max, sum( (l[i,j] + delta_1[i,j]* (lh[i] + lh[j]) ) * x_val[i,j] for i in 1:n for j in 1:n if i != j))
+    @objective(sub_model, Max, sum( (l[i,j] + delta_1[i,j]* (lh[i] + lh[j]) ) * x_val[i,j] for i in 1:n for j in i+1:n))
     
     ##### Constraints #####
-    @constraint(sub_model, sum( delta_1[i,j] for i in 1:n for j in 1:n) <= L)
+    @constraint(sub_model, sum( delta_1[i,j] for i in 1:n for j in i+1:n) <= L)
     
     optimize!(sub_model)
 
@@ -106,14 +106,17 @@ function cutSolve(inputFile::String, showResult::Bool= false, silent::Bool=true)
     
     ##### Constraints #####
     # Triangular inequalities between x and y
-    @constraint(model, [k in 1:K, i in 1:n, j in i:n], y[i,k] + y[j,k] <= x[i,j] + 1)
+    @constraint(model, [k in 1:K, i in 1:n, j in i+1:n], y[i,k] + y[j,k] <= x[i,j] + 1)
     # Each node is in a part
     @constraint(model, [i in 1:n], sum(y[i,k] for k in 1:K) == 1)
     # New constraints for cut
     # Rewriting of the objective
-    @constraint(model,z >=  sum(x[i,j] * l[i,j] for i in 1:n for j in 1:n))
+    @constraint(model,z >=  sum(x[i,j] * l[i,j] for i in 1:n for j in i+1:n))
     # Weights of the parts
     @constraint(model, [k in 1:K], sum(w_v[i]*y[i,k] for i in 1:n) <= B)
+
+    # First node can be put anywhere
+    @constraint(model, y[1,1] ==1)
 
     ##### Callbacks #####
     function myCallback(cb_data::CPLEX.CallbackContext, context_id::Clong)
@@ -131,7 +134,7 @@ function cutSolve(inputFile::String, showResult::Bool= false, silent::Bool=true)
             # Solve subproblems
             z_1, delta_1= firstSubProblem(x_val, n, l, lh, L)
             if z_1 > z_val
-                cstr = @build_constraint(z >= sum(x[i,j] * (l[i,j] + delta_1[i,j]* (lh[i] + lh[j])) for i in 1:n for j in 1:n if i != j))
+                cstr = @build_constraint(z >= sum(x[i,j] * (l[i,j] + delta_1[i,j]* (lh[i] + lh[j])) for i in 1:n for j in i+1:n))
                 MOI.submit(model, MOI.LazyConstraint(cb_data), cstr)
             end
 
