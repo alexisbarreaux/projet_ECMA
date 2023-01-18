@@ -37,7 +37,7 @@ function firstSubProblem(x_val::Matrix{Float64},n::Int64, l::Matrix{Float64}, lh
     @variable(sub_model, 0. <= delta_1[i in 1:n, j in 1:n] <= 3.)
 
     ##### Objective #####
-    @objective(sub_model, Max, sum( (l[i,j] + delta_1[i,j]* (lh[i] + lh[j]) ) * x_val[i,j] for i in 1:n for j in 1:n))
+    @objective(sub_model, Max, sum( (l[i,j] + delta_1[i,j]* (lh[i] + lh[j]) ) * x_val[i,j] for i in 1:n for j in 1:n if i != j))
     
     ##### Constraints #####
     @constraint(sub_model, sum( delta_1[i,j] for i in 1:n for j in 1:n) <= L)
@@ -131,7 +131,7 @@ function cutSolve(inputFile::String, showResult::Bool= false, silent::Bool=true)
             # Solve subproblems
             z_1, delta_1= firstSubProblem(x_val, n, l, lh, L)
             if z_1 > z_val
-                cstr = @build_constraint(z >= sum(x[i,j] * (l[i,j] + delta_1[i,j]* (lh[i] + lh[j])) for i in 1:n for j in 1:n))
+                cstr = @build_constraint(z >= sum(x[i,j] * (l[i,j] + delta_1[i,j]* (lh[i] + lh[j])) for i in 1:n for j in 1:n if i != j))
                 MOI.submit(model, MOI.LazyConstraint(cb_data), cstr)
             end
 

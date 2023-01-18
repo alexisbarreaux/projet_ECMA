@@ -56,7 +56,7 @@ function staticSolve(inputFile::String, showResult::Bool= false, silent::Bool=tr
     @variable(model, y[i in 1:n, k in 1:K], Bin)
 
     # Objective
-    @objective(model, Min, sum(x[i,j] * l[i,j] for i in 1:n for j in 1:n))
+    @objective(model, Min, sum(x[i,j] * l[i,j] for i in 1:n for j in 1:n if i != j))
     
     # Constraints
     # Weights of the parts
