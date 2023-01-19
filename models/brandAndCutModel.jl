@@ -6,26 +6,25 @@ include("../utils/instancesUtils.jl")
 include("../utils/jsonUtils.jl")
 
 """
-include("models/cutsModel.jl")
-cutSolve("10_ulysses_3.tsp")
+include("models/brandAndCutModel.jl")
+brandAndCutSolve("10_ulysses_3.tsp")
 
 Solution robuste : {1, 2, 3, 10}, {4, 6, 7, 8}, {5, 9}
 (objectif : 136.995276296)
 """
 
-
-function solveAndReturnAllInstancesCuts()::Dict{String, Float64}
-    cutsValues = Dict{String, Float64}()
+function solveAndReturnAllInstancesBranchAndCut()::Dict{String, Float64}
+    brandAndCutsValues = Dict{String, Float64}()
     for inputFile in DATA_FILES
-        cutsValues[inputFile] = cutsSolve(inputFile)
+        brandAndCutsValues[inputFile] = brandAndCutsSolve(inputFile)
     end
-    return cutsValues
+    return brandAndCutsValues
 end
 
 function solveAndStoreAllInstancesStatic(resultFile::String=DUAL_RESULTS_FILE)::Nothing
-    cutsValues = solveAndReturnAllInstancesCuts()
+    brandAndCutsValues = solveAndReturnAllInstancesBranchAndCut()
     filePath =RESULTS_DIR_PATH * "\\" * resultFile
-    jsonDropToFile(filePath, cutsValues)
+    jsonDropToFile(filePath, brandAndCutsValues)
 end
 
 function firstSubProblem(x_val::Matrix{Float64},n::Int64, l::Matrix{Float64}, lh::Vector{Int64}, L::Int64)::Tuple{Float64, Matrix{Float64}}
@@ -72,7 +71,7 @@ function secondKSubProblem(y_val::Matrix{Float64}, k::Int64, n::Int64, w_v::Vect
     return JuMP.objective_value(sub_model), JuMP.value.(delta_2)
 end
 
-function cutSolve(inputFile::String, showResult::Bool= false, silent::Bool=true)::Any
+function brandAndCutSolve(inputFile::String, showResult::Bool= false, silent::Bool=true)::Any
     """
     The source file includes the following variables:
         - n : number of nodes,
@@ -85,7 +84,7 @@ function cutSolve(inputFile::String, showResult::Bool= false, silent::Bool=true)
         - lh : lengths linked to the uncertainty on lengths for each node.
         - coordinates : coordinates of our points/nodes.
     """
-    println("Solving ", inputFile, " in cuts mode.")
+    println("Solving ", inputFile, " in brandAndCuts mode.")
     # Directly load data file
     include(DATA_DIR_PATH * "\\" * inputFile)
 
@@ -123,8 +122,8 @@ function cutSolve(inputFile::String, showResult::Bool= false, silent::Bool=true)
 
     ##### Callbacks #####
     function myCallback(cb_data::CPLEX.CallbackContext, context_id::Clong)
-        # Here we only cut on a candidate solution.
-        if context_id != CPX_CALLBACKCONTEXT_CANDIDATE
+        # What we want to cut is an eventually wrong integer solution
+        if !isIntegerPoint(cb_data, context_id)
             return
         else
             CPLEX.load_callback_variable_primal(cb_data, context_id)

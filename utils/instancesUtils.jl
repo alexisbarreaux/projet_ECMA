@@ -1,3 +1,5 @@
+using CPLEX
+
 function computeDistances(coordinates::Matrix{Float64})::Matrix{Float64}
     coordinatesSize = size(coordinates)
     n = coordinatesSize[1]
@@ -16,4 +18,24 @@ function computeDistances(coordinates::Matrix{Float64})::Matrix{Float64}
     end
 
     return distances
+end
+
+function isIntegerPoint(cb_data::CPLEX.CallbackContext, context_id::Clong)
+    # context_id == CPX_CALLBACKCONTEXT_CANDIDATE si le callback est
+    # appelé dans un des deux cas suivants :
+    # cas 1 - une solution entière a été obtenue; ou
+    # cas 2 - une relaxation non bornée a été obtenue
+    if context_id != CPX_CALLBACKCONTEXT_CANDIDATE
+        return false
+    end
+    # Pour déterminer si on est dans le cas 1 ou 2, on essaie de récupérer la
+    # solution entière courante
+    ispoint_p = Ref{Cint}()
+    ret = CPXcallbackcandidateispoint(cb_data, ispoint_p)
+    # S’il n’y a pas de solution entière
+    if ret != 0 || ispoint_p[] == 0
+        return false
+    else
+        return true
+    end
 end
