@@ -90,10 +90,8 @@ function cutSolve(inputFile::String, showResult::Bool= false, silent::Bool=true)
     include(DATA_DIR_PATH * "\\" * inputFile)
 
     l = computeDistances(coordinates)
-
     # Creating the model
     model = Model(CPLEX.Optimizer)
-    MOI.set(model, MOI.NumberOfThreads(), 1)
     if silent
         set_silent(model)
     end
@@ -121,72 +119,63 @@ function cutSolve(inputFile::String, showResult::Bool= false, silent::Bool=true)
     # First node can be put anywhere
     @constraint(model, y[1,1] ==1)
 
-    ##### Callbacks #####
-    function myCallback(cb_data::CPLEX.CallbackContext, context_id::Clong)
-        # Here we only cut on a candidate solution.
-        if context_id != CPX_CALLBACKCONTEXT_CANDIDATE
-            return
-        else
-            CPLEX.load_callback_variable_primal(cb_data, context_id)
-
-            # Get current values for the variables
-            z_val = callback_value(cb_data, z)
-            x_val = callback_value.(cb_data, x)
-            y_val = callback_value.(cb_data, y)
-
-            # Solve subproblems
-            z_1, delta_1= firstSubProblem(x_val, n, l, lh, L)
-            if z_1 > z_val
-                cstr = @build_constraint(z >= sum(x[i,j] * (l[i,j] + delta_1[i,j]* (lh[i] + lh[j])) for i in 1:n for j in i+1:n))
-                MOI.submit(model, MOI.LazyConstraint(cb_data), cstr)
-            end
-
-            for k in 1:K 
-                z_2_k, delta_2_k = secondKSubProblem(y_val, k, n, w_v, W_v, W)
-                if z_2_k > B
-                    # Add all cuts or only for the most violated one ?
-                    for k_2 in 1:K
-                        cstr = @build_constraint(sum( w_v[i]* (1 + delta_2_k[i]) * y[i,k_2] for i in 1:n) <= B)
-                        MOI.submit(model, MOI.LazyConstraint(cb_data), cstr)
-                    end
-                end
-            end
-
-        end
-    end
-
-    MOI.set(model, CPLEX.CallbackFunction(), myCallback)
-
-    # Solve
+    hasAddedConstraint = true
     start = time()
-    optimize!(model)
+    while hasAddedConstraint
+        hasAddedConstraint = false
+        # Solve current state
+        optimize!(model)
+        feasibleSolutionFound = primal_status(model) == MOI.FEASIBLE_POINT
+        isOptimal = termination_status(model) == MOI.OPTIMAL
+        if feasibleSolutionFound
+            value = JuMP.objective_value(model)
+        else
+            println("Not feasible!!!")
+            return
+        end
+
+        # Solve sub problems with current optimum
+        z_val = JuMP.value(z)
+        x_val = JuMP.value.(x)
+        y_val = JuMP.value.(y)
+
+        z_1, delta_1= firstSubProblem(x_val, n, l, lh, L)
+        if z_1 > (z_val + 1e-5)
+            cstr = @constraint(model, z >= sum(x[i,j] * (l[i,j] + delta_1[i,j]* (lh[i] + lh[j])) for i in 1:n for j in i+1:n))
+            hasAddedConstraint = true
+        end
+
+        for k in 1:K 
+            z_2_k, delta_2_k = secondKSubProblem(y_val, k, n, w_v, W_v, W)
+            if z_2_k > (B + 1e-5)
+                cstr = @constraint(model, [k_2 in 1:K], sum( w_v[i]* (1 + delta_2_k[i]) * y[i,k_2] for i in 1:n) <= B)
+                hasAddedConstraint = true
+            end
+        end
+
+    end
     optimize_time = time() - start
 
     ### Display the solution
-    feasibleSolutionFound = primal_status(model) == MOI.FEASIBLE_POINT
-    isOptimal = termination_status(model) == MOI.OPTIMAL
-    if feasibleSolutionFound
+    
     # Récupération des valeurs d’une variable
-        result = JuMP.value.(y)
-        value = JuMP.objective_value(model)
-        
-        if showResult
-            println("Success, nodes : " * string(JuMP.node_count(model))* ", Time : "* string(round(optimize_time, digits= 5)) * " Value : " * string(round(value, digits=4)))
-            createdParts = Dict{Int, Array}(k => [] for k in 1:K)
-            for i in 1:n
-                for k in 1:K
-                    if result[i,k] == 1
-                        createdParts[k] = vcat(createdParts[k],[i])
-                        break
-                    end
+    result = JuMP.value.(y)
+    value = JuMP.objective_value(model)
+    
+    if showResult
+        println("Success, nodes : " * string(JuMP.node_count(model))* ", Time : "* string(round(optimize_time, digits= 5)) * " Value : " * string(round(value, digits=4)))
+        createdParts = Dict{Int, Array}(k => [] for k in 1:K)
+        for i in 1:n
+            for k in 1:K
+                if result[i,k] == 1
+                    createdParts[k] = vcat(createdParts[k],[i])
+                    break
                 end
             end
-            println("Found parts are : ", createdParts)
         end
-        return value
-    else
-        println("Not feasible!!")
-        return
+        println("Found parts are : ", createdParts)
     end
+    return value
+
 
 end
