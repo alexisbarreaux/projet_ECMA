@@ -7,3 +7,6 @@ Problèmes avec les variables qui ne sont pas des vrais tableaux
 Plans coupants corrigés avec résolution totale sont plus rapides que le branch and cut ? même avec un seul thread ??
 
 Calculer la taille max d'un ensemble par les valeurs de B et w_v n'apporte rien :'(
+
+
+Ajout du calcul d'une borne sur le nombre d'éléments qui doivent être dans chaque partie du fait des contraintes de type binpacking

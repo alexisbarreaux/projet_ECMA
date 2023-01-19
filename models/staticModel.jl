@@ -47,6 +47,8 @@ function staticSolve(inputFile::String, showResult::Bool= false, silent::Bool=tr
 
     # Creating the model
     model = Model(CPLEX.Optimizer)
+    set_time_limit_sec(model, 60.0)
+
     if silent
         set_silent(model)
     end
