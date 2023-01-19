@@ -2,3 +2,5 @@ cassage de symétrie : le premier noeud peut être fixé dans le premier groupe,
 Par contre cela diminue le nombre de noeuds, sans pour autant diminuer le temps visiblement !
 
 Problèmes avec les variables qui ne sont pas des vrais tableaux
+
+Plans coupants corrigés avec résolution totale sont plus rapides que le branch and cut ? même avec un seul thread ??

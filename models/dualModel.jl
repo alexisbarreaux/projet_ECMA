@@ -81,9 +81,7 @@ function dualSolve(inputFile::String, showResult::Bool= false, silent::Bool=true
     @constraint(model, y[1,1] ==1)
 
     # Solve
-    start = time()
     optimize!(model)
-    optimize_time = time() - start
 
     ### Display the solution
     feasibleSolutionFound = primal_status(model) == MOI.FEASIBLE_POINT
@@ -94,7 +92,7 @@ function dualSolve(inputFile::String, showResult::Bool= false, silent::Bool=true
         value = JuMP.objective_value(model)
         
         if showResult
-            println("Success, nodes : " * string(JuMP.node_count(model))* ", Time : "* string(round(optimize_time, digits= 5)) * " Value : " * string(round(value, digits=4)))
+            println("Success, nodes : " * string(JuMP.node_count(model))* ", Time : "* string(round(JuMP.solve_time(model) digits= 5)) * " Value : " * string(round(value, digits=4)))
             createdParts = Dict{Int, Array}(k => [] for k in 1:K)
             for i in 1:n
                 for k in 1:K

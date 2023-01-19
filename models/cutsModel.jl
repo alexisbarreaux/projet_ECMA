@@ -120,7 +120,7 @@ function cutSolve(inputFile::String, showResult::Bool= false, silent::Bool=true)
     @constraint(model, y[1,1] ==1)
 
     hasAddedConstraint = true
-    start = time()
+    optimize_time = 0
     while hasAddedConstraint
         hasAddedConstraint = false
         # Solve current state
@@ -133,6 +133,7 @@ function cutSolve(inputFile::String, showResult::Bool= false, silent::Bool=true)
             println("Not feasible!!!")
             return
         end
+        optimize_time += JuMP.solve_time(model)
 
         # Solve sub problems with current optimum
         z_val = JuMP.value(z)
@@ -154,7 +155,6 @@ function cutSolve(inputFile::String, showResult::Bool= false, silent::Bool=true)
         end
 
     end
-    optimize_time = time() - start
 
     ### Display the solution
     
