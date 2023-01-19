@@ -43,8 +43,6 @@ function staticSolve(inputFile::String, showResult::Bool= false, silent::Bool=tr
     # Directly load data file
     include(DATA_DIR_PATH * "\\" * inputFile)
 
-    maxPartSize = boundOnPartsSize(B, w_v)
-
     l = computeDistances(coordinates)
 
     # Creating the model
@@ -78,6 +76,7 @@ function staticSolve(inputFile::String, showResult::Bool= false, silent::Bool=tr
 
     # Each part can't contain more than maxPartSize elements
     # Note : this seem to add a slight overhead and no real gain.
+    #maxPartSize = boundOnPartsSize(B, w_v)
     #@constraint(model, [k in 1:K],  sum(y[i,k] for i in 1:n) <= maxPartSize)
 
     # Solve
