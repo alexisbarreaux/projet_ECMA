@@ -20,6 +20,20 @@ function computeDistances(coordinates::Matrix{Float64})::Matrix{Float64}
     return distances
 end
 
+function boundOnPartsSize(B::Int64, w_v::Vector{Int64})::Int64
+    """
+    This function returns the maximum number of elments that can be put in the same part.
+    """
+    sortedWeights = sort(w_v)
+    maxSize = 0
+    sumWeights = 0
+    while sumWeights < B && maxSize < length(sortedWeights)
+        maxSize += 1
+        sumWeights += sortedWeights[maxSize]
+    end
+    return maxSize - 1
+end
+
 function isIntegerPoint(cb_data::CPLEX.CallbackContext, context_id::Clong)
     # context_id == CPX_CALLBACKCONTEXT_CANDIDATE si le callback est
     # appelé dans un des deux cas suivants :

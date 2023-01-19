@@ -1,6 +1,9 @@
 cassage de symétrie : le premier noeud peut être fixé dans le premier groupe, ça ne change pas l'optimize
-Par contre cela diminue le nombre de noeuds, sans pour autant diminuer le temps visiblement !
+Par contre cela diminue le nombre de noeuds, sans pour autant diminuer le temps visiblement ! Même ça l'augmente, surement du fait
+d'optimisation faites en dessous.
 
 Problèmes avec les variables qui ne sont pas des vrais tableaux
 
 Plans coupants corrigés avec résolution totale sont plus rapides que le branch and cut ? même avec un seul thread ??
+
+Calculer la taille max d'un ensemble par les valeurs de B et w_v n'apporte rien :'(
