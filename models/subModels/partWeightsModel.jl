@@ -5,6 +5,10 @@ include("../../utils/constants.jl")
 include("../../utils/jsonUtils.jl")
 include("../../utils/instancesUtils.jl")
 
+"""
+include("models/subModels/partWeightsModel.jl")
+computeAndStoreBoundAllFiles("weightBounds2.json")
+"""
 function computeBoundAllFiles()::Dict{String, Float64}
     bounds = Dict{String, Float64}()
     for inputFile in DATA_FILES
