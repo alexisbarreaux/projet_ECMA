@@ -149,6 +149,7 @@ function cutSolve(inputFile::String, showResult::Bool= false, silent::Bool=true)
         for k in 1:K 
             z_2_k, delta_2_k = secondKSubProblem(y_val, k, n, w_v, W_v, W)
             if z_2_k > (B + 1e-5)
+                # Adding constraints for all k because it gains time
                 cstr = @constraint(model, [k_2 in 1:K], sum( w_v[i]* (1 + delta_2_k[i]) * y[i,k_2] for i in 1:n) <= B)
                 hasAddedConstraint = true
             end
