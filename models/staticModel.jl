@@ -11,22 +11,22 @@ staticSolve("10_ulysses_3.tsp")
 """
 # Expected result :  {1, 5, 8} {2, 3, 4}, {6, 7, 9, 10} 
 # Expected value : 54.354823588
-function solveAndReturnAllInstancesStatic()::Dict{String, Float64}
-    staticValues = Dict{String, Float64}()
+function solveAndReturnAllInstancesStatic(timeLimit::Float64=60.0)::Dict{String, Tuple{Float64, Bool, Float64}}
+    staticValues = Dict{String, Tuple{Float64, Bool, Float64}}()
     for inputFile in DATA_FILES
         staticValues[inputFile] = staticSolve(inputFile)
     end
     return staticValues
 end
 
-function solveAndStoreAllInstancesStatic(resultFile::String=STATIC_RESULTS_FILE)::Nothing
+function solveAndStoreAllInstancesStatic(timeLimit::Float64=60.0, resultFile::String=STATIC_RESULTS_FILE)::Nothing
     staticValues = solveAndReturnAllInstancesStatic()
     filePath =RESULTS_DIR_PATH * "\\" * resultFile
     jsonDropToFile(filePath, staticValues)
 end
 
 
-function staticSolve(inputFile::String, showResult::Bool= false, silent::Bool=true)::Any
+function staticSolve(inputFile::String, showResult::Bool= false, silent::Bool=true, timeLimit::Float64=60.0)::Any
     """
     The source file includes the following variables:
         - n : number of nodes,
@@ -47,7 +47,7 @@ function staticSolve(inputFile::String, showResult::Bool= false, silent::Bool=tr
 
     # Creating the model
     model = Model(CPLEX.Optimizer)
-    set_time_limit_sec(model, 60.0)
+    set_time_limit_sec(model, timeLimit)
 
     if silent
         set_silent(model)
@@ -91,8 +91,9 @@ function staticSolve(inputFile::String, showResult::Bool= false, silent::Bool=tr
     # Récupération des valeurs d’une variable
         result = JuMP.value.(y)
         value = JuMP.objective_value(model)
+        solveTime = round(JuMP.solve_time(model), digits= 5)
         if showResult
-            println("Success, nodes : " * string(JuMP.node_count(model))* ", Time : "* string(round(JuMP.solve_time(model), digits= 5)) * " Value : " * string(round(value, digits=4)))
+            println("Success, nodes : " * string(JuMP.node_count(model))* ", Time : "* string(solveTime) * " Value : " * string(round(value, digits=4)))
             createdParts = Dict{Int, Array}(k => [] for k in 1:K)
             for i in 1:n
                 for k in 1:K
@@ -104,7 +105,7 @@ function staticSolve(inputFile::String, showResult::Bool= false, silent::Bool=tr
             end
             println("Found parts are : ", createdParts)
         end
-        return value
+        return value, isOptimal, solveTime
     else
         println("Not feasible!!")
         return

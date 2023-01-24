@@ -1,6 +1,7 @@
 cassage de symétrie : le premier noeud peut être fixé dans le premier groupe, ça ne change pas l'optimize
 Par contre cela diminue le nombre de noeuds, sans pour autant diminuer le temps visiblement ! Même ça l'augmente, surement du fait
 d'optimisation faites en dessous.
+EN FAIT SI : ça perd un peu sur le cas _3 mais gagne bien sur _6, mais pas pour le dual on dirait ? 
 
 Problèmes avec les variables qui ne sont pas des vrais tableaux
 
