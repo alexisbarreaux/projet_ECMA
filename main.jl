@@ -72,7 +72,7 @@ function staticSolveUnoptimizedInstance(timeLimit::Float64=60.0, resultFile::Str
         # Run
         println("Found unoptimized instance " * fileToRun)
         if staticRunInstanceAndUpdateDataframe(currentResults, fileToRun, timeLimit, rowToReplace)
-            CSV.write(filePath, currentResults)
+            CSV.write(filePath, currentResults, delim=";")
         end
         return 
     end
