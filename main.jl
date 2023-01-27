@@ -27,6 +27,7 @@ end
 
 function staticRunInstanceAndUpdateDataframe(currentResults::DataFrame, fileToRun::String, timeLimit::Float64, rowToReplace::Union{Int, Nothing}=nothing)::Bool
     optimal, solveTime, value = staticSolve(fileToRun, false, true, timeLimit)
+    
     # Modify dataframe
     if rowToReplace == nothing
         rowToReplace = findfirst(==(fileToRun), currentResults.instance)
@@ -114,7 +115,34 @@ function staticSolveAllInstances(timeLimit::Float64=-1., resultFile::String=STAT
         updatedDf = updatedDf || staticRunInstanceAndUpdateDataframe(currentResults, fileToRun, timeLimit)
     end
     if updatedDf
-        CSV.write(filePath, currentResults)
+        CSV.write(filePath, currentResults, delim=";")
+    end
+    return 
+end
+
+function staticSolveAllNonOptimalInstances(timeLimit::Float64=-1., resultFile::String=STATIC_RESULTS_FILE)::Nothing
+    # Loading
+    filePath =RESULTS_DIR_PATH * "\\" * resultFile * ".csv"
+    # Get unoptimal instance
+    if !isfile(filePath)
+        println("No such file to load")
+        return
+    else
+        currentResults = DataFrame(CSV.File(filePath))
+    end
+
+    # Run
+    updatedDf = false
+    for fileToRun in DATA_FILES
+        rowIndex = findfirst(==(fileToRun), currentResults.instance)
+        if currentResults[rowIndex,:].optimal
+            println("Skipping " * fileToRun * ": already optimal.")
+        else
+            updatedDf = updatedDf || staticRunInstanceAndUpdateDataframe(currentResults, fileToRun, timeLimit)
+        end
+    end
+    if updatedDf
+        CSV.write(filePath, currentResults, delim=";")
     end
     return 
 end
