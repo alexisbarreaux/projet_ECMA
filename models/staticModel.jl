@@ -3,7 +3,6 @@ using CPLEX
 
 include("../utils/constants.jl")
 include("../utils/instancesUtils.jl")
-include("../utils/jsonUtils.jl")
 
 """
 include("models/staticModel.jl")
@@ -11,20 +10,6 @@ staticSolve("10_ulysses_3.tsp")
 """
 # Expected result :  {1, 5, 8} {2, 3, 4}, {6, 7, 9, 10} 
 # Expected value : 54.354823588
-function solveAndReturnAllInstancesStatic(timeLimit::Float64=60.0)::Dict{String, Tuple{Float64, Bool, Float64}}
-    staticValues = Dict{String, Tuple{Float64, Bool, Float64}}()
-    for inputFile in DATA_FILES
-        staticValues[inputFile] = staticSolve(inputFile)
-    end
-    return staticValues
-end
-
-function solveAndStoreAllInstancesStatic(timeLimit::Float64=60.0, resultFile::String=STATIC_RESULTS_FILE)::Nothing
-    staticValues = solveAndReturnAllInstancesStatic()
-    filePath =RESULTS_DIR_PATH * "\\" * resultFile
-    jsonDropToFile(filePath, staticValues)
-end
-
 
 function staticSolve(inputFile::String, showResult::Bool= false, silent::Bool=true, timeLimit::Float64=60.0)::Any
     """
@@ -105,7 +90,7 @@ function staticSolve(inputFile::String, showResult::Bool= false, silent::Bool=tr
             end
             println("Found parts are : ", createdParts)
         end
-        return value, isOptimal, solveTime
+        return isOptimal, solveTime, value
     else
         println("Not feasible!!")
         return

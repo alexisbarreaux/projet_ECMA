@@ -1,7 +1,7 @@
 UTILS_DIR_PATH = @__DIR__
 
 RESULTS_DIR_PATH = dirname(UTILS_DIR_PATH) * "\\results"
-STATIC_RESULTS_FILE = "static.json"
+STATIC_RESULTS_FILE = "static"
 DUAL_RESULTS_FILE = "dual.json"
 
 DATA_DIR_PATH = dirname(UTILS_DIR_PATH) * "\\data"
