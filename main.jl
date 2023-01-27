@@ -97,7 +97,7 @@ function staticSolveChosenInstance(fileToRun::String, timeLimit::Float64=60.0, r
     return 
 end
 
-function staticSolveAllInstances(timeLimit::Float64=60.0, resultFile::String=STATIC_RESULTS_FILE)::Nothing
+function staticSolveAllInstances(timeLimit::Float64=-1., resultFile::String=STATIC_RESULTS_FILE)::Nothing
     # Loading
     filePath =RESULTS_DIR_PATH * "\\" * resultFile * ".csv"
     # Get unoptimal instance
@@ -111,7 +111,7 @@ function staticSolveAllInstances(timeLimit::Float64=60.0, resultFile::String=STA
     # Run
     updatedDf = false
     for fileToRun in DATA_FILES
-        updateDf = updateDf || staticRunInstanceAndUpdateDataframe(currentResults, fileToRun, timeLimit)
+        updatedDf = updatedDf || staticRunInstanceAndUpdateDataframe(currentResults, fileToRun, timeLimit)
     end
     if updatedDf
         CSV.write(filePath, currentResults)
