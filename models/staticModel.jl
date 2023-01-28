@@ -99,3 +99,47 @@ function staticSolve(inputFile::String, showResult::Bool= false, silent::Bool=tr
     end
 
 end
+
+function staticSolveUnoptimizedInstance(timeLimit::Float64=60.0, resultFile::String=STATIC_RESULTS_FILE)::Nothing
+    # Loading
+    filePath =RESULTS_DIR_PATH * "\\" * resultFile * ".csv"
+    # Get unoptimal instance
+    if !isfile(filePath)
+        println("No such file to load")
+        return
+    else
+        currentResults = DataFrame(CSV.File(filePath))
+        fileToRun, rowToReplace = findUnoptimzedInstance(currentResults)
+    end
+
+    if fileToRun == ""
+        println("No non optimized instance is left.")
+        return
+    else
+        # Run
+        println("Found unoptimized instance " * fileToRun)
+        if runInstanceAndUpdateDataframe(currentResults, fileToRun, timeLimit, rowToReplace)
+            CSV.write(filePath, currentResults, delim=";")
+        end
+        return 
+    end
+end
+
+function staticSolveChosenInstance(fileToRun::String, timeLimit::Float64=60.0, resultFile::String=STATIC_RESULTS_FILE)::Nothing
+    # Loading
+    filePath =RESULTS_DIR_PATH * "\\" * resultFile * ".csv"
+    # Get unoptimal instance
+    if !isfile(filePath)
+        println("No such file to load")
+        return
+    else
+        currentResults = DataFrame(CSV.File(filePath))
+    end
+
+    # Run
+    if runInstanceAndUpdateDataframe(currentResults, fileToRun, timeLimit)
+        CSV.write(filePath, currentResults)
+    end
+
+    return 
+end

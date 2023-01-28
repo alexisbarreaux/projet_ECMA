@@ -72,7 +72,7 @@ function secondKSubProblem(y_val::Matrix{Float64}, k::Int64, n::Int64, w_v::Vect
     return JuMP.objective_value(sub_model), JuMP.value.(delta_2)
 end
 
-function cutSolve(inputFile::String, showResult::Bool= false, silent::Bool=true)::Any
+function cutSolve(inputFile::String, showResult::Bool= false, silent::Bool=true, timeLimit::Float64=60.0)::Any
     """
     The source file includes the following variables:
         - n : number of nodes,
@@ -95,7 +95,9 @@ function cutSolve(inputFile::String, showResult::Bool= false, silent::Bool=true)
     if silent
         set_silent(model)
     end
-
+    if timeLimit >= 0
+        set_time_limit_sec(model, timeLimit)
+    end
     ##### Variables #####
     @variable(model, x[i in 1:n, j in 1:n], Bin)
     @variable(model, y[i in 1:n, k in 1:K], Bin)
@@ -158,25 +160,32 @@ function cutSolve(inputFile::String, showResult::Bool= false, silent::Bool=true)
     end
 
     ### Display the solution
-    
+    ### Display the solution
+    feasibleSolutionFound = primal_status(model) == MOI.FEASIBLE_POINT
+    isOptimal = termination_status(model) == MOI.OPTIMAL
+    if feasibleSolutionFound
     # Récupération des valeurs d’une variable
-    result = JuMP.value.(y)
-    value = JuMP.objective_value(model)
-    
-    if showResult
-        println("Success, nodes : " * string(JuMP.node_count(model))* ", Time : "* string(round(optimize_time, digits= 5)) * " Value : " * string(round(value, digits=4)))
-        createdParts = Dict{Int, Array}(k => [] for k in 1:K)
-        for i in 1:n
-            for k in 1:K
-                if result[i,k] == 1
-                    createdParts[k] = vcat(createdParts[k],[i])
-                    break
+        result = JuMP.value.(y)
+        value = JuMP.objective_value(model)
+        solveTime = round(JuMP.solve_time(model), digits= 5)
+        if showResult
+            println("Success, nodes : " * string(JuMP.node_count(model))* ", Time : "* string(solveTime) * " Value : " * string(round(value, digits=4)))
+            createdParts = Dict{Int, Array}(k => [] for k in 1:K)
+            for i in 1:n
+                for k in 1:K
+                    if result[i,k] == 1
+                        createdParts[k] = vcat(createdParts[k],[i])
+                        break
+                    end
                 end
             end
+            println("Found parts are : ", createdParts)
         end
-        println("Found parts are : ", createdParts)
+        return isOptimal, solveTime, value
+    else
+        println("Not feasible!!")
+        return
     end
-    return value
 
 
 end

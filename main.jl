@@ -2,12 +2,17 @@ using DataFrames
 using CSV
 
 include("./models/staticModel.jl")
+include("./models/dualModel.jl")
+include("./models/cutsModel.jl")
+include("./models/branchAndCutModel.jl")
+
 include("./utils/constants.jl")
 
 """
 include("./main.jl")
 staticSolveChosenInstance("30_eil_9.tsp", 5.0)
-staticSolveAllInstances(60.0)
+solveAllInstances()
+solveAllInstances(cutSolve, 5.0, CUT_RESULTS_FILE)
 staticSolveUnoptimizedInstance(60.0)
 """
 
@@ -25,8 +30,8 @@ function findUnoptimzedInstance(currentResults::DataFrame)::Tuple{String, Int}
     return fileToRun, rowToReplace
 end
 
-function staticRunInstanceAndUpdateDataframe(currentResults::DataFrame, fileToRun::String, timeLimit::Float64, rowToReplace::Union{Int, Nothing}=nothing)::Bool
-    optimal, solveTime, value = staticSolve(fileToRun, false, true, timeLimit)
+function runInstanceAndUpdateDataframe(method::Function, currentResults::DataFrame, fileToRun::String, timeLimit::Float64, rowToReplace::Union{Int, Nothing}=nothing)::Bool
+    optimal, solveTime, value = method(fileToRun, false, true, timeLimit)
     
     # Modify dataframe
     if rowToReplace == nothing
@@ -54,73 +59,27 @@ function staticRunInstanceAndUpdateDataframe(currentResults::DataFrame, fileToRu
     return false
 end
 
-function staticSolveUnoptimizedInstance(timeLimit::Float64=60.0, resultFile::String=STATIC_RESULTS_FILE)::Nothing
+function solveAllInstances(method::Function = staticSolve, timeLimit::Float64=-1., resultFile::String=STATIC_RESULTS_FILE)::Nothing
     # Loading
     filePath =RESULTS_DIR_PATH * "\\" * resultFile * ".csv"
     # Get unoptimal instance
     if !isfile(filePath)
-        println("No such file to load")
-        return
+        currentResults = DataFrame(instance=String[], optimal=Bool[], time=Float64[], value=Float64[])
     else
         currentResults = DataFrame(CSV.File(filePath))
-        fileToRun, rowToReplace = findUnoptimzedInstance(currentResults)
     end
 
-    if fileToRun == ""
-        println("No non optimized instance is left.")
-        return
-    else
-        # Run
-        println("Found unoptimized instance " * fileToRun)
-        if staticRunInstanceAndUpdateDataframe(currentResults, fileToRun, timeLimit, rowToReplace)
+    # Run
+    for fileToRun in DATA_FILES
+        updatedDf = runInstanceAndUpdateDataframe(method, currentResults, fileToRun, timeLimit)
+        if updatedDf
             CSV.write(filePath, currentResults, delim=";")
         end
-        return 
-    end
-end
-
-function staticSolveChosenInstance(fileToRun::String, timeLimit::Float64=60.0, resultFile::String=STATIC_RESULTS_FILE)::Nothing
-    # Loading
-    filePath =RESULTS_DIR_PATH * "\\" * resultFile * ".csv"
-    # Get unoptimal instance
-    if !isfile(filePath)
-        println("No such file to load")
-        return
-    else
-        currentResults = DataFrame(CSV.File(filePath))
-    end
-
-    # Run
-    if staticRunInstanceAndUpdateDataframe(currentResults, fileToRun, timeLimit)
-        CSV.write(filePath, currentResults)
-    end
-
-    return 
-end
-
-function staticSolveAllInstances(timeLimit::Float64=-1., resultFile::String=STATIC_RESULTS_FILE)::Nothing
-    # Loading
-    filePath =RESULTS_DIR_PATH * "\\" * resultFile * ".csv"
-    # Get unoptimal instance
-    if !isfile(filePath)
-        println("No such file to load")
-        return
-    else
-        currentResults = DataFrame(CSV.File(filePath))
-    end
-
-    # Run
-    updatedDf = false
-    for fileToRun in DATA_FILES
-        updatedDf = updatedDf || staticRunInstanceAndUpdateDataframe(currentResults, fileToRun, timeLimit)
-    end
-    if updatedDf
-        CSV.write(filePath, currentResults, delim=";")
     end
     return 
 end
 
-function staticSolveAllNonOptimalInstances(timeLimit::Float64=-1., resultFile::String=STATIC_RESULTS_FILE)::Nothing
+function solveAllNonOptimalInstances(method::Function = staticSolve, timeLimit::Float64=-1., resultFile::String=STATIC_RESULTS_FILE)::Nothing
     # Loading
     filePath =RESULTS_DIR_PATH * "\\" * resultFile * ".csv"
     # Get unoptimal instance
@@ -133,15 +92,17 @@ function staticSolveAllNonOptimalInstances(timeLimit::Float64=-1., resultFile::S
 
     # Run
     for fileToRun in DATA_FILES
+        """
         if !endswith(fileToRun, "_3.tsp")
             continue
         end
+        """
         rowIndex = findfirst(==(fileToRun), currentResults.instance)
         if currentResults[rowIndex,:].optimal
             println("Skipping " * fileToRun * ": already optimal.")
             continue
         else
-            updatedDf = staticRunInstanceAndUpdateDataframe(currentResults, fileToRun, timeLimit)
+            updatedDf = runInstanceAndUpdateDataframe(method, currentResults, fileToRun, timeLimit)
             if updatedDf
                 CSV.write(filePath, currentResults, delim=";")
             end

@@ -2,6 +2,10 @@ UTILS_DIR_PATH = @__DIR__
 
 RESULTS_DIR_PATH = dirname(UTILS_DIR_PATH) * "\\results"
 STATIC_RESULTS_FILE = "static"
+DUAL_RESULTS_FILE = "dual"
+CUT_RESULTS_FILE = "cut"
+BRANCH_AND_CUT_RESULTS_FILE = "branc_and_cut"
+HEURISTICS_RESULTS_FILE = "heuristic"
 DUAL_RESULTS_FILE = "dual.json"
 
 DATA_DIR_PATH = dirname(UTILS_DIR_PATH) * "\\data"
