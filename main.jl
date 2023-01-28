@@ -13,6 +13,8 @@ include("./main.jl")
 staticSolveChosenInstance("30_eil_9.tsp", 5.0)
 solveAllInstances()
 solveAllInstances(cutSolve, 5.0, CUT_RESULTS_FILE)
+solveAllInstances(brandAndCutSolve, 5.0, BRANCH_AND_CUT_RESULTS_FILE)
+solveAllInstances(dualSolve, 30.0, DUAL_RESULTS_FILE)
 staticSolveUnoptimizedInstance(60.0)
 """
 
@@ -31,8 +33,14 @@ function findUnoptimzedInstance(currentResults::DataFrame)::Tuple{String, Int}
 end
 
 function runInstanceAndUpdateDataframe(method::Function, currentResults::DataFrame, fileToRun::String, timeLimit::Float64, rowToReplace::Union{Int, Nothing}=nothing)::Bool
-    optimal, solveTime, value = method(fileToRun, false, true, timeLimit)
     
+    result = method(fileToRun, false, true, timeLimit)
+    if result == nothing
+        println("NOT FEASIBLE!!")
+        return false
+    end
+
+    optimal, solveTime, value = result
     # Modify dataframe
     if rowToReplace == nothing
         rowToReplace = findfirst(==(fileToRun), currentResults.instance)

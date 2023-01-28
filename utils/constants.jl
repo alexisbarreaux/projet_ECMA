@@ -6,7 +6,7 @@ DUAL_RESULTS_FILE = "dual"
 CUT_RESULTS_FILE = "cut"
 BRANCH_AND_CUT_RESULTS_FILE = "branc_and_cut"
 HEURISTICS_RESULTS_FILE = "heuristic"
-DUAL_RESULTS_FILE = "dual.json"
+DUAL_RESULTS_FILE = "dual"
 
 DATA_DIR_PATH = dirname(UTILS_DIR_PATH) * "\\data"
 DATA_FILES = [
