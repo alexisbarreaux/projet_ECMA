@@ -132,17 +132,18 @@ function staticSolveAllNonOptimalInstances(timeLimit::Float64=-1., resultFile::S
     end
 
     # Run
-    updatedDf = false
     for fileToRun in DATA_FILES
         rowIndex = findfirst(==(fileToRun), currentResults.instance)
         if currentResults[rowIndex,:].optimal
             println("Skipping " * fileToRun * ": already optimal.")
+            continue
         else
-            updatedDf = updatedDf || staticRunInstanceAndUpdateDataframe(currentResults, fileToRun, timeLimit)
+            updatedDf = staticRunInstanceAndUpdateDataframe(currentResults, fileToRun, timeLimit)
+            if updatedDf
+                CSV.write(filePath, currentResults, delim=";")
+            end
+            continue
         end
-    end
-    if updatedDf
-        CSV.write(filePath, currentResults, delim=";")
     end
     return 
 end
