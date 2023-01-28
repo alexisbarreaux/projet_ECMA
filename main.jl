@@ -133,6 +133,9 @@ function staticSolveAllNonOptimalInstances(timeLimit::Float64=-1., resultFile::S
 
     # Run
     for fileToRun in DATA_FILES
+        if !endswith(fileToRun, "_3.tsp")
+            continue
+        end
         rowIndex = findfirst(==(fileToRun), currentResults.instance)
         if currentResults[rowIndex,:].optimal
             println("Skipping " * fileToRun * ": already optimal.")
