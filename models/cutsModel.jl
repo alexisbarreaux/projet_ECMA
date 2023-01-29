@@ -123,6 +123,8 @@ function cutSolve(inputFile::String, showResult::Bool= false, silent::Bool=true,
 
     hasAddedConstraint = true
     optimize_time = 0
+    # TODO GERER LE TEMPS A LA MAIN POUR ICI
+    # TODO retourner le gap aussi
     while hasAddedConstraint
         hasAddedConstraint = false
         # Solve current state
