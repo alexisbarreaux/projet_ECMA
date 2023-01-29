@@ -94,6 +94,7 @@ function dualSolve(inputFile::String, showResult::Bool= false, silent::Bool=true
         result = JuMP.value.(y)
         value = JuMP.objective_value(model)
         solveTime = round(JuMP.solve_time(model), digits= 5)
+        gap = JuMP.relative_gap(model)
         if showResult
             println("Success, nodes : " * string(JuMP.node_count(model))* ", Time : "* string(solveTime) * " Value : " * string(round(value, digits=4)))
             createdParts = Dict{Int, Array}(k => [] for k in 1:K)
@@ -107,7 +108,7 @@ function dualSolve(inputFile::String, showResult::Bool= false, silent::Bool=true
             end
             println("Found parts are : ", createdParts)
         end
-        return isOptimal, solveTime, value
+        return isOptimal, solveTime, value, gap
     else
         println("Not feasible!!")
         return

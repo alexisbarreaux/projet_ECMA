@@ -125,6 +125,7 @@ function cutSolve(inputFile::String, showResult::Bool= false, silent::Bool=true,
     optimize_time = 0
     # TODO GERER LE TEMPS A LA MAIN POUR ICI
     # TODO retourner le gap aussi
+    # TODO gérer le temps de run aussi
     while hasAddedConstraint
         hasAddedConstraint = false
         # Solve current state
@@ -162,9 +163,9 @@ function cutSolve(inputFile::String, showResult::Bool= false, silent::Bool=true,
     end
 
     ### Display the solution
-    ### Display the solution
     feasibleSolutionFound = primal_status(model) == MOI.FEASIBLE_POINT
     isOptimal = termination_status(model) == MOI.OPTIMAL
+    gap = JuMP.relative_gap(model)
     if feasibleSolutionFound
     # Récupération des valeurs d’une variable
         result = JuMP.value.(y)
@@ -183,7 +184,7 @@ function cutSolve(inputFile::String, showResult::Bool= false, silent::Bool=true,
             end
             println("Found parts are : ", createdParts)
         end
-        return isOptimal, solveTime, value
+        return isOptimal, solveTime, value, gap
     else
         println("Not feasible!!")
         return

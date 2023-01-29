@@ -40,19 +40,19 @@ function runInstanceAndUpdateDataframe(method::Function, currentResults::DataFra
         return false
     end
 
-    optimal, solveTime, value = result
+    optimal, solveTime, value, gap = result
     # Modify dataframe
     if rowToReplace == nothing
         rowToReplace = findfirst(==(fileToRun), currentResults.instance)
         if rowToReplace == nothing
             println("Pushing new row to results dataframe")
-            push!(currentResults, [fileToRun optimal solveTime value])
+            push!(currentResults, [fileToRun optimal solveTime value gap])
             return true
         else
             currentRow= currentResults[rowToReplace,:]
             if value < currentRow.value || (solveTime > currentRow.time && value <= currentRow.value + 1e-6)
                 println("Improved value for " * fileToRun)
-                currentResults[rowToReplace,:] = [fileToRun optimal solveTime value]
+                currentResults[rowToReplace,:] = [fileToRun optimal solveTime value gap]
                 return true
             end
         end
@@ -60,7 +60,7 @@ function runInstanceAndUpdateDataframe(method::Function, currentResults::DataFra
         currentRow = currentResults[rowToReplace,:]
         if value < currentRow.value || (solveTime > currentRow.time && value <= currentRow.value + 1e-6)
             println("Improved value for " * fileToRun)
-            currentResults[rowToReplace,:] = [fileToRun optimal solveTime value]
+            currentResults[rowToReplace,:] = [fileToRun optimal solveTime value gap]
             return true
         end
     end
