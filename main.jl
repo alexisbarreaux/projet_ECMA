@@ -72,7 +72,7 @@ function solveAllInstances(method::Function = staticSolve, timeLimit::Float64=-1
     filePath =RESULTS_DIR_PATH * "\\" * resultFile * ".csv"
     # Get unoptimal instance
     if !isfile(filePath)
-        currentResults = DataFrame(instance=String[], optimal=Bool[], time=Float64[], value=Float64[])
+        currentResults = DataFrame(instance=String[], optimal=Bool[], time=Float64[], value=Float64[], gap=Float64[])
     else
         currentResults = DataFrame(CSV.File(filePath))
     end
