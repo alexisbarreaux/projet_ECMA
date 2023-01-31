@@ -1,4 +1,5 @@
 using DataStructures
+using Random
 
 include("../utils/constants.jl")
 include("../utils/instancesUtils.jl")
@@ -19,10 +20,23 @@ The source file includes the following variables:
 
 """
 include("heuristic/heuristic.jl")
-run_heuristic("10_ulysses_3.tsp")
+run_heuristic("52_berlin_9.tsp")
 """
 
 function compute_worst_weight(inputFile::String, cluster::Array)::Any
+    include(DATA_DIR_PATH * "\\" * inputFile)
+    combined_dict = OrderedDict(zip(cluster, [-w_v[k] for k in cluster]))
+    total_weight = 0
+    remaining_uncertainty = W
+    for (node, _) in combined_dict
+        error = min(remaining_uncertainty, W_v[node])
+        remaining_uncertainty -= error
+        total_weight += w_v[node] * (1 + error)
+    end
+    return total_weight
+end
+
+function compute_worst_weight_sort(inputFile::String, cluster::Array)::Any
     include(DATA_DIR_PATH * "\\" * inputFile)
     combined_dict = OrderedDict(zip(cluster, [-w_v[k] for k in cluster]))
     sorted_dict = sort(combined_dict; byvalue=true)
@@ -35,7 +49,6 @@ function compute_worst_weight(inputFile::String, cluster::Array)::Any
     end
     return total_weight
 end
-
 
 function check_feasibility(inputFile::String, solution::Dict{Int,Array})::Bool
     include(DATA_DIR_PATH * "\\" * inputFile)
@@ -75,18 +88,37 @@ function compute_worst_case(inputFile::String, solution::Dict{Int,Array})::Any
 end
 
 
-function construct_solution(inputFile::String)::Dict{Int,Array}
+function construct_solution(inputFile::String, mode::Int=0)::Dict{Int,Array}
     include(DATA_DIR_PATH * "\\" * inputFile)
     solution = Dict{Int,Array}(k => [] for k in 1:K)
-    combined_dict = OrderedDict(zip(1:n, [-w_v[i] for i in 1:n]))
-    #combined_dict = OrderedDict(zip(1:n, [-w_v[i] * (1 + W_v[i]) for i in 1:n]))
+    if mode == 0
+        combined_dict = OrderedDict(zip(1:n, [-w_v[k] for k in 1:n]))
+    end
+    if mode == 1
+        combined_dict = OrderedDict(zip(1:n, [(-w_v[k], -W_v[k]) for k in 1:n]))
+    end
+    if mode == 2
+        combined_dict = OrderedDict(zip(1:n, [(-w_v[k], W_v[k]) for k in 1:n]))
+    end
+    """if mode == 3
+        combined_dict = OrderedDict(zip(1:n, [-w_v[n+1-k] for k in 1:n]))
+    end"""
+    if mode == 3
+        #Random.seed!(2)
+        random_values = rand(Float64, n)
+        combined_dict = OrderedDict(zip(1:n, random_values))
+    end
     sorted_dict = sort(combined_dict; byvalue=true)
     for (node, _) in sorted_dict
         min_weight = 2 * B
         min_index = 0
         for k in 1:K
             append!(solution[k], node)
-            worst_weight = compute_worst_weight(inputFile, solution[k])
+            if mode == 3
+                worst_weight = compute_worst_weight_sort(inputFile, solution[k])
+            else
+                worst_weight = compute_worst_weight(inputFile, solution[k])
+            end
             pop!(solution[k])
             if worst_weight < min_weight
                 min_weight = worst_weight
@@ -103,11 +135,24 @@ function construct_solution(inputFile::String)::Dict{Int,Array}
 end
 
 function run_heuristic(inputFile::String)::Any
+    println("Trying Mode 0")
     solution = construct_solution(inputFile)
     #println(solution)
     if !(check_feasibility(inputFile, solution))
-        println("Heuristic solution for ", inputFile, " is not feasible in the worst case scenario")
-        return
+        println("Trying Mode 1")
+        solution = construct_solution(inputFile, 1)
+        if !(check_feasibility(inputFile, solution))
+            println("Trying Mode 2")
+            solution = construct_solution(inputFile, 2)
+            if !(check_feasibility(inputFile, solution))
+                println("Trying Mode 3")
+                solution = construct_solution(inputFile, 3)
+                if !(check_feasibility(inputFile, solution))
+                    println("Heuristic solution for ", inputFile, " is not feasible in the worst case scenario")
+                    return
+                end
+            end
+        end
     end
     return compute_worst_case(inputFile, solution)
 end
@@ -117,4 +162,18 @@ function run_all_instances()::Nothing
         println("Solving instance ", inputFile)
         println(run_heuristic(inputFile))
     end
+end
+
+function find_seed(inputFile::String)::Any
+    include(DATA_DIR_PATH * "\\" * inputFile)
+    for k in 251:1000
+        Random.seed!(k)
+        solution = construct_solution(inputFile, 3)
+        if (check_feasibility(inputFile, solution))
+            println(k)
+            return k
+        end
+    end
+    println("rip")
+    return
 end
