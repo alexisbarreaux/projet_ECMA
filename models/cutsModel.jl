@@ -28,7 +28,7 @@ function solveAndStoreAllInstancesStatic(resultFile::String=DUAL_RESULTS_FILE)::
     jsonDropToFile(filePath, cutsValues)
 end
 
-function firstSubProblem(x_val::Matrix{Float64},n::Int64, l::Matrix{Float64}, lh::Vector{Int64}, L::Int64)::Tuple{Float64, Matrix{Float64}}
+function firstSubProblem(x_val::Matrix{Float64},n::Int64, l::Matrix{Float64}, lh::Vector{Int64}, L::Int64)::Tuple{Float64, Matrix{Float64}, Float64}
     """
     Function to solve the first sub problem in the current state.
     """
@@ -47,10 +47,10 @@ function firstSubProblem(x_val::Matrix{Float64},n::Int64, l::Matrix{Float64}, lh
     
     optimize!(sub_model)
 
-    return JuMP.objective_value(sub_model), JuMP.value.(delta_1)
+    return JuMP.objective_value(sub_model), JuMP.value.(delta_1), JuMP.solve_time(sub_model)
 end
 
-function secondKSubProblem(y_val::Matrix{Float64}, k::Int64, n::Int64, w_v::Vector{Int64}, W_v::Vector{Float64}, W::Int64)::Tuple{Float64, Vector{Float64}}
+function secondKSubProblem(y_val::Matrix{Float64}, k::Int64, n::Int64, w_v::Vector{Int64}, W_v::Vector{Float64}, W::Int64)::Tuple{Float64, Vector{Float64}, Float64}
     """
     Function to solve the k-th second sub problem in the current state.
     """
@@ -69,10 +69,10 @@ function secondKSubProblem(y_val::Matrix{Float64}, k::Int64, n::Int64, w_v::Vect
     
     optimize!(sub_model)
 
-    return JuMP.objective_value(sub_model), JuMP.value.(delta_2)
+    return JuMP.objective_value(sub_model), JuMP.value.(delta_2), JuMP.solve_time(sub_model)
 end
 
-function cutSolve(inputFile::String, showResult::Bool= false, silent::Bool=true)::Any
+function cutSolve(inputFile::String, showResult::Bool= false, silent::Bool=true, timeLimit::Float64=60.0)::Any
     """
     The source file includes the following variables:
         - n : number of nodes,
@@ -120,21 +120,70 @@ function cutSolve(inputFile::String, showResult::Bool= false, silent::Bool=true)
     @constraint(model, y[1,1] ==1)
 
     hasAddedConstraint = true
-    optimize_time = 0
-    while hasAddedConstraint
+    runTime = 0
+    while hasAddedConstraint && (timeLimit < 0 || runTime < timeLimit)
         hasAddedConstraint = false
         # Solve current state
+        if timeLimit >= 0
+            set_time_limit_sec(model, timeLimit - runTime)
+        end
+
         optimize!(model)
         feasibleSolutionFound = primal_status(model) == MOI.FEASIBLE_POINT
         isOptimal = termination_status(model) == MOI.OPTIMAL
+        runTime += JuMP.solve_time(model)
+
+        if timeLimit >= 0 && runTime > timeLimit
+            break
+        end
+
         if feasibleSolutionFound
             value = JuMP.objective_value(model)
-        else
-            println("Not feasible!!!")
-            return
-        end
-        optimize_time += JuMP.solve_time(model)
+            # Solve sub problems with current optimum
+            z_val = JuMP.value(z)
+            x_val = JuMP.value.(x)
+            y_val = JuMP.value.(y)
 
+            z_1, delta_1, time_1= firstSubProblem(x_val, n, l, lh, L)
+            runTime += time_1
+            if z_1 > (z_val + 1e-5)
+                if timeLimit >= 0 && runTime > timeLimit
+                    println("Not feasible!!")
+                    return
+                else
+                    cstr = @constraint(model, z >= sum(x[i,j] * (l[i,j] + delta_1[i,j]* (lh[i] + lh[j])) for i in 1:n for j in i+1:n))
+                    hasAddedConstraint = true
+                end
+            end
+    
+            for k in 1:K 
+                z_2_k, delta_2_k, time_2_k = secondKSubProblem(y_val, k, n, w_v, W_v, W)
+                runTime += time_2_k
+                if z_2_k > (B + 1e-5)
+                    if timeLimit >= 0 && runTime > timeLimit
+                        println("Not feasible!!")
+                        return
+                    else
+                        # Adding constraints for all k because it gains time
+                        cstr = @constraint(model, [k_2 in 1:K], sum( w_v[i]* (1 + delta_2_k[i]) * y[i,k_2] for i in 1:n) <= B)
+                        hasAddedConstraint = true
+                    end
+                end
+            end
+        else
+            break
+        end
+
+    end
+
+    ### Display the solution
+    feasibleSolutionFound = primal_status(model) == MOI.FEASIBLE_POINT
+    isOptimal = termination_status(model) == MOI.OPTIMAL
+    gap = JuMP.relative_gap(model)
+    if feasibleSolutionFound
+    # Récupération des valeurs d’une variable
+        # Il faut checker si on a encore des plans non valides
+        value = JuMP.objective_value(model)
         # Solve sub problems with current optimum
         z_val = JuMP.value(z)
         x_val = JuMP.value.(x)
@@ -142,40 +191,39 @@ function cutSolve(inputFile::String, showResult::Bool= false, silent::Bool=true)
 
         z_1, delta_1= firstSubProblem(x_val, n, l, lh, L)
         if z_1 > (z_val + 1e-5)
-            cstr = @constraint(model, z >= sum(x[i,j] * (l[i,j] + delta_1[i,j]* (lh[i] + lh[j])) for i in 1:n for j in i+1:n))
-            hasAddedConstraint = true
+            println("Not feasible!!")
+            return
         end
 
         for k in 1:K 
             z_2_k, delta_2_k = secondKSubProblem(y_val, k, n, w_v, W_v, W)
             if z_2_k > (B + 1e-5)
-                cstr = @constraint(model, [k_2 in 1:K], sum( w_v[i]* (1 + delta_2_k[i]) * y[i,k_2] for i in 1:n) <= B)
-                hasAddedConstraint = true
+                println("Not feasible!!")
+                return
             end
         end
 
-    end
 
-    ### Display the solution
-    
-    # Récupération des valeurs d’une variable
-    result = JuMP.value.(y)
-    value = JuMP.objective_value(model)
-    
-    if showResult
-        println("Success, nodes : " * string(JuMP.node_count(model))* ", Time : "* string(round(optimize_time, digits= 5)) * " Value : " * string(round(value, digits=4)))
-        createdParts = Dict{Int, Array}(k => [] for k in 1:K)
-        for i in 1:n
-            for k in 1:K
-                if result[i,k] == 1
-                    createdParts[k] = vcat(createdParts[k],[i])
-                    break
+        result = JuMP.value.(y)
+        solveTime = round(runTime, digits= 5)
+        if showResult
+            println("Success, nodes : " * string(JuMP.node_count(model))* ", Time : "* string(solveTime) * " Value : " * string(round(value, digits=4)))
+            createdParts = Dict{Int, Array}(k => [] for k in 1:K)
+            for i in 1:n
+                for k in 1:K
+                    if result[i,k] == 1
+                        createdParts[k] = vcat(createdParts[k],[i])
+                        break
+                    end
                 end
             end
+            println("Found parts are : ", createdParts)
         end
-        println("Found parts are : ", createdParts)
+        return isOptimal, solveTime, value, gap
+    else
+        println("Not feasible!!")
+        return
     end
-    return value
 
 
 end

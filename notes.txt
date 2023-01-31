@@ -1,6 +1,7 @@
 cassage de symétrie : le premier noeud peut être fixé dans le premier groupe, ça ne change pas l'optimize
 Par contre cela diminue le nombre de noeuds, sans pour autant diminuer le temps visiblement ! Même ça l'augmente, surement du fait
 d'optimisation faites en dessous.
+EN FAIT SI : ça perd un peu sur le cas _3 mais gagne bien sur _6, mais pas pour le dual on dirait ? 
 
 Problèmes avec les variables qui ne sont pas des vrais tableaux
 
@@ -10,3 +11,6 @@ Calculer la taille max d'un ensemble par les valeurs de B et w_v n'apporte rien 
 
 
 Ajout du calcul d'une borne sur le nombre d'éléments qui doivent être dans chaque partie du fait des contraintes de type binpacking
+
+Ajouter les coupes pour tous les k en même temps est plus rapide ! et de beaucoup en plus pour les plans coupants (2.5 vs 300s pour
+14_burma_6 en plans coupants et vs 14.5 vs 18.8 en branch and cut)

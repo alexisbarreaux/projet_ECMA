@@ -3,15 +3,30 @@ using CPLEX
 
 include("../utils/constants.jl")
 include("../utils/instancesUtils.jl")
+include("../utils/jsonUtils.jl")
 
 """
-include("models/staticModel.jl")
-staticSolve("10_ulysses_3.tsp")
+include("models/staticModel_2.jl")
+staticSolve2("10_ulysses_3.tsp")
 """
 # Expected result :  {1, 5, 8} {2, 3, 4}, {6, 7, 9, 10} 
 # Expected value : 54.354823588
+function solveAndReturnAllInstancesStatic(timeLimit::Float64=60.0)::Dict{String, Tuple{Float64, Bool, Float64}}
+    staticValues = Dict{String, Tuple{Float64, Bool, Float64}}()
+    for inputFile in DATA_FILES
+        staticValues[inputFile] = staticSolve2(inputFile)
+    end
+    return staticValues
+end
 
-function staticSolve(inputFile::String, showResult::Bool= false, silent::Bool=true, timeLimit::Float64=60.0)::Any
+function solveAndStoreAllInstancesStatic(timeLimit::Float64=60.0, resultFile::String=STATIC_RESULTS_FILE)::Nothing
+    staticValues = solveAndReturnAllInstancesStatic()
+    filePath =RESULTS_DIR_PATH * "\\" * resultFile
+    jsonDropToFile(filePath, staticValues)
+end
+
+
+function staticSolve2(inputFile::String, showResult::Bool= false, silent::Bool=true, timeLimit::Float64=60.0)::Any
     """
     The source file includes the following variables:
         - n : number of nodes,
@@ -32,29 +47,21 @@ function staticSolve(inputFile::String, showResult::Bool= false, silent::Bool=tr
 
     # Creating the model
     model = Model(CPLEX.Optimizer)
-    if timeLimit >= 0
-        set_time_limit_sec(model, timeLimit)
-    end
+    set_time_limit_sec(model, timeLimit)
 
     if silent
         set_silent(model)
     end
 
     # Variables
-    @variable(model, x[i in 1:n, j in i+1:n], Bin)
     @variable(model, y[i in 1:n, k in 1:K], Bin)
 
     # Objective
-    @objective(model, Min, sum(x[i,j] * l[i,j] for i in 1:n for j in i+1:n))
+    @objective(model, Min, sum(sum(y[i,k]*y[j,k] for k in 1:K) * l[i,j] for i in 1:n for j in i+1:n))
     
     # Constraints
     # Weights of the parts
     @constraint(model, [k in 1:K], sum(w_v[i]*y[i,k] for i in 1:n) <= B)
-    # Triangular inequalities between x and y
-    @constraint(model, [k in 1:K, i in 1:n, j in i+1:n], - x[i,j] + y[i,k] + y[j,k] <=1)
-    # Note : adding the others constraints below doesn't seem to yield a better results in times or nodes.
-    #@constraint(model, [k in 1:K, i in 1:n, j in i+1:n], x[i,j] + y[i,k] - y[j,k] <=1)
-    #@constraint(model, [k in 1:K, i in 1:n, j in i+1:n], x[i,j] - y[i,k] - y[j,k] <=1)
 
     # Each node is in a part
     @constraint(model, [i in 1:n],  sum(y[i,k] for k in 1:K) == 1)
@@ -79,7 +86,6 @@ function staticSolve(inputFile::String, showResult::Bool= false, silent::Bool=tr
         result = JuMP.value.(y)
         value = JuMP.objective_value(model)
         solveTime = round(JuMP.solve_time(model), digits= 5)
-        gap = JuMP.relative_gap(model)
         if showResult
             println("Success, nodes : " * string(JuMP.node_count(model))* ", Time : "* string(solveTime) * " Value : " * string(round(value, digits=4)))
             createdParts = Dict{Int, Array}(k => [] for k in 1:K)
@@ -93,54 +99,10 @@ function staticSolve(inputFile::String, showResult::Bool= false, silent::Bool=tr
             end
             println("Found parts are : ", createdParts)
         end
-        return isOptimal, solveTime, value, gap
+        return value, isOptimal, solveTime
     else
         println("Not feasible!!")
         return
     end
 
-end
-
-function staticSolveUnoptimizedInstance(timeLimit::Float64=60.0, resultFile::String=STATIC_RESULTS_FILE)::Nothing
-    # Loading
-    filePath =RESULTS_DIR_PATH * "\\" * resultFile * ".csv"
-    # Get unoptimal instance
-    if !isfile(filePath)
-        println("No such file to load")
-        return
-    else
-        currentResults = DataFrame(CSV.File(filePath))
-        fileToRun, rowToReplace = findUnoptimzedInstance(currentResults)
-    end
-
-    if fileToRun == ""
-        println("No non optimized instance is left.")
-        return
-    else
-        # Run
-        println("Found unoptimized instance " * fileToRun)
-        if runInstanceAndUpdateDataframe(currentResults, fileToRun, timeLimit, rowToReplace)
-            CSV.write(filePath, currentResults, delim=";")
-        end
-        return 
-    end
-end
-
-function staticSolveChosenInstance(fileToRun::String, timeLimit::Float64=60.0, resultFile::String=STATIC_RESULTS_FILE)::Nothing
-    # Loading
-    filePath =RESULTS_DIR_PATH * "\\" * resultFile * ".csv"
-    # Get unoptimal instance
-    if !isfile(filePath)
-        println("No such file to load")
-        return
-    else
-        currentResults = DataFrame(CSV.File(filePath))
-    end
-
-    # Run
-    if runInstanceAndUpdateDataframe(currentResults, fileToRun, timeLimit)
-        CSV.write(filePath, currentResults)
-    end
-
-    return 
 end

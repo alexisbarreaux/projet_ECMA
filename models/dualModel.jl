@@ -28,7 +28,7 @@ function solveAndStoreAllInstancesDual(resultFile::String=DUAL_RESULTS_FILE)::No
 end
 
 
-function dualSolve(inputFile::String, showResult::Bool= false, silent::Bool=true)::Any
+function dualSolve(inputFile::String, showResult::Bool= false, silent::Bool=true, timeLimit::Float64=60.0)::Any
     """
     The source file includes the following variables:
         - n : number of nodes,
@@ -51,6 +51,9 @@ function dualSolve(inputFile::String, showResult::Bool= false, silent::Bool=true
     model = Model(CPLEX.Optimizer)
     if silent
         set_silent(model)
+    end
+    if timeLimit >= 0
+        set_time_limit_sec(model, timeLimit)
     end
 
     # Variables
@@ -90,9 +93,10 @@ function dualSolve(inputFile::String, showResult::Bool= false, silent::Bool=true
     # Récupération des valeurs d’une variable
         result = JuMP.value.(y)
         value = JuMP.objective_value(model)
-        
+        solveTime = round(JuMP.solve_time(model), digits= 5)
+        gap = JuMP.relative_gap(model)
         if showResult
-            println("Success, nodes : " * string(JuMP.node_count(model))* ", Time : "* string(round(JuMP.solve_time(model), digits= 5)) * " Value : " * string(round(value, digits=4)))
+            println("Success, nodes : " * string(JuMP.node_count(model))* ", Time : "* string(solveTime) * " Value : " * string(round(value, digits=4)))
             createdParts = Dict{Int, Array}(k => [] for k in 1:K)
             for i in 1:n
                 for k in 1:K
@@ -104,7 +108,7 @@ function dualSolve(inputFile::String, showResult::Bool= false, silent::Bool=true
             end
             println("Found parts are : ", createdParts)
         end
-        return value
+        return isOptimal, solveTime, value, gap
     else
         println("Not feasible!!")
         return

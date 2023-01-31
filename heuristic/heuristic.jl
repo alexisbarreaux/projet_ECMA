@@ -134,7 +134,8 @@ function construct_solution(inputFile::String, mode::Int=0)::Dict{Int,Array}
     return solution
 end
 
-"""function run_heuristic(inputFile::String)::Any
+"""function run_heuristic(inputFile::String)::Union{Nothing, Tuple{Float64, Float64}}
+    start = time()
     println("Trying Mode 0")
     solution = construct_solution(inputFile)
     #println(solution)
@@ -157,7 +158,8 @@ end
     return compute_worst_case(inputFile, solution)
 end"""
 
-function run_heuristic(inputFile::String)::Any
+function run_heuristic(inputFile::String)::Union{Nothing,Tuple{Float64,Float64}}
+    start = time()
     best_solution = Dict{Int,Array}()
     best_res = -1
     best_mode = -1
@@ -181,7 +183,8 @@ function run_heuristic(inputFile::String)::Any
         return
     end
     println("Mode ", best_mode, " is the best one")
-    return best_res
+    runTime = time() - start
+    return runTime, best_res
 end
 
 function run_all_instances()::Nothing
