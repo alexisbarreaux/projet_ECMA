@@ -81,7 +81,7 @@ function dualSolve(inputFile::String, showResult::Bool= false, silent::Bool=true
     @constraint(model, [i in 1:n, k in 1:K], (gamma[k] + dzeta[i,k]) >= w_v[i]*y[i,k])    
 
     # First node can be put anywhere
-    @constraint(model, y[1,1] ==1)
+    #@constraint(model, y[1,1] ==1)
 
     # Solve
     optimize!(model)
