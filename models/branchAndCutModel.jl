@@ -27,7 +27,7 @@ function solveAndStoreAllInstancesStatic(resultFile::String=DUAL_RESULTS_FILE)::
     jsonDropToFile(filePath, brandAndCutsValues)
 end
 
-function firstSubProblem(x_val::Matrix{Float64},n::Int64, l::Matrix{Float64}, lh::Vector{Int64}, L::Int64)::Tuple{Float64, Matrix{Float64}}
+function branchFirstSubProblem(x_val::Matrix{Float64},n::Int64, l::Matrix{Float64}, lh::Vector{Int64}, L::Int64)::Tuple{Float64, Matrix{Float64}}
     """
     Function to solve the first sub problem in the current state.
     """
@@ -49,7 +49,7 @@ function firstSubProblem(x_val::Matrix{Float64},n::Int64, l::Matrix{Float64}, lh
     return JuMP.objective_value(sub_model), JuMP.value.(delta_1)
 end
 
-function secondKSubProblem(y_val::Matrix{Float64}, k::Int64, n::Int64, w_v::Vector{Int64}, W_v::Vector{Float64}, W::Int64)::Tuple{Float64, Vector{Float64}}
+function branchSecondKSubProblem(y_val::Matrix{Float64}, k::Int64, n::Int64, w_v::Vector{Int64}, W_v::Vector{Float64}, W::Int64)::Tuple{Float64, Vector{Float64}}
     """
     Function to solve the k-th second sub problem in the current state.
     """
@@ -137,14 +137,14 @@ function brandAndCutSolve(inputFile::String, showResult::Bool= false, silent::Bo
             y_val = callback_value.(cb_data, y)
 
             # Solve subproblems
-            z_1, delta_1= firstSubProblem(x_val, n, l, lh, L)
+            z_1, delta_1= branchFirstSubProblem(x_val, n, l, lh, L)
             if z_1 > z_val
                 cstr = @build_constraint(z >= sum(x[i,j] * (l[i,j] + delta_1[i,j]* (lh[i] + lh[j])) for i in 1:n for j in i+1:n))
                 MOI.submit(model, MOI.LazyConstraint(cb_data), cstr)
             end
 
             for k in 1:K 
-                z_2_k, delta_2_k = secondKSubProblem(y_val, k, n, w_v, W_v, W)
+                z_2_k, delta_2_k = branchSecondKSubProblem(y_val, k, n, w_v, W_v, W)
                 if z_2_k > B
                     # Add all cuts or only for the most violated one ?
                     for k_2 in 1:K
