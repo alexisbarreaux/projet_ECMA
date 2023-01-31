@@ -134,7 +134,8 @@ function construct_solution(inputFile::String, mode::Int=0)::Dict{Int,Array}
     return solution
 end
 
-function run_heuristic(inputFile::String)::Any
+function run_heuristic(inputFile::String)::Union{Nothing, Tuple{Float64, Float64}}
+    start = time()
     println("Trying Mode 0")
     solution = construct_solution(inputFile)
     #println(solution)
@@ -154,7 +155,9 @@ function run_heuristic(inputFile::String)::Any
             end
         end
     end
-    return compute_worst_case(inputFile, solution)
+    value = compute_worst_case(inputFile, solution)
+    runTime = time() - start
+    return runTime, value
 end
 
 function run_all_instances()::Nothing

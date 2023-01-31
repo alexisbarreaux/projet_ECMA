@@ -8,6 +8,8 @@ include("./models/branchAndCutModel.jl")
 
 include("./utils/constants.jl")
 
+include("./heuristic/heuristic.jl")
+
 """
 include("./main.jl")
 staticSolveChosenInstance("30_eil_9.tsp", 5.0)
@@ -15,6 +17,8 @@ solveAllInstances()
 solveAllInstances(cutSolve, 5.0, CUT_RESULTS_FILE)
 solveAllInstances(brandAndCutSolve, 5.0, BRANCH_AND_CUT_RESULTS_FILE)
 solveAllInstances(dualSolve, 30.0, DUAL_RESULTS_FILE)
+solveAllHeuristic()
+
 staticSolveUnoptimizedInstance(60.0)
 """
 
@@ -119,3 +123,61 @@ function solveAllNonOptimalInstances(method::Function = staticSolve, timeLimit::
     end
     return 
 end
+
+
+function solveAllHeuristic(resultFile::String=HEURISTICS_RESULTS_FILE)::Nothing
+    # Loading
+    filePath =RESULTS_DIR_PATH * "\\" * resultFile * ".csv"
+    # Get unoptimal instance
+    if !isfile(filePath)
+        currentResults = DataFrame(instance=String[], time=Float64[], value=Float64[])
+    else
+        currentResults = DataFrame(CSV.File(filePath))
+    end
+
+    # Run
+    for fileToRun in DATA_FILES
+        updatedDf = runHeuristicAndUpdateDataframe(currentResults, fileToRun)
+        if updatedDf
+            CSV.write(filePath, currentResults, delim=";")
+        end
+    end
+    return 
+end
+
+function runHeuristicAndUpdateDataframe(currentResults::DataFrame, fileToRun::String, rowToReplace::Union{Int, Nothing}=nothing)::Bool
+    
+    result = run_heuristic(fileToRun)
+    if result == nothing
+        println("NOT FEASIBLE!!")
+        return false
+    end
+
+    solveTime, value = result
+    # Modify dataframe
+    if rowToReplace == nothing
+        rowToReplace = findfirst(==(fileToRun), currentResults.instance)
+        if rowToReplace == nothing
+            println("Pushing new row to results dataframe")
+            push!(currentResults, [fileToRun solveTime value])
+            return true
+        else
+            currentRow= currentResults[rowToReplace,:]
+            if value < currentRow.value || (solveTime > currentRow.time && value <= currentRow.value + 1e-6)
+                println("Improved value for " * fileToRun)
+                currentResults[rowToReplace,:] = [fileToRun solveTime value]
+                return true
+            end
+        end
+    else
+        currentRow = currentResults[rowToReplace,:]
+        if value < currentRow.value || (solveTime > currentRow.time && value <= currentRow.value + 1e-6)
+            println("Improved value for " * fileToRun)
+            currentResults[rowToReplace,:] = [fileToRun solveTime value]
+            return true
+        end
+    end
+    return false
+end
+
+
