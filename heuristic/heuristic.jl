@@ -134,7 +134,7 @@ function construct_solution(inputFile::String, mode::Int=0)::Dict{Int,Array}
     return solution
 end
 
-function run_heuristic(inputFile::String)::Any
+"""function run_heuristic(inputFile::String)::Any
     println("Trying Mode 0")
     solution = construct_solution(inputFile)
     #println(solution)
@@ -155,6 +155,33 @@ function run_heuristic(inputFile::String)::Any
         end
     end
     return compute_worst_case(inputFile, solution)
+end"""
+
+function run_heuristic(inputFile::String)::Any
+    best_solution = Dict{Int,Array}()
+    best_res = -1
+    best_mode = -1
+    for mode in 0:2
+        solution = construct_solution(inputFile, mode)
+        if (check_feasibility(inputFile, solution))
+            res = compute_worst_case(inputFile, solution)
+            if best_res == -1
+                best_solution = solution
+                best_res = res
+                best_mode = mode
+            elseif res < best_res
+                best_solution = solution
+                best_res = res
+                best_mode = mode
+            end
+        end
+    end
+    if best_res == -1
+        println("Heuristic solution for ", inputFile, " is not feasible in the worst case scenario")
+        return
+    end
+    println("Mode ", best_mode, " is the best one")
+    return best_res
 end
 
 function run_all_instances()::Nothing
