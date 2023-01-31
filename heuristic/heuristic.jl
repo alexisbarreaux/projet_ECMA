@@ -155,8 +155,8 @@ function run_heuristic(inputFile::String)::Union{Nothing, Tuple{Float64, Float64
             end
         end
     end
-    value = compute_worst_case(inputFile, solution)
     runTime = time() - start
+    value = compute_worst_case(inputFile, solution)
     return runTime, value
 end
 
