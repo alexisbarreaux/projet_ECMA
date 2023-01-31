@@ -61,12 +61,12 @@ function staticSolve(inputFile::String, showResult::Bool= false, silent::Bool=tr
 
     # First node can be put anywhere
     # Note : this seem to actually slow down the process
-    #@constraint(model, y[1,1] ==1)
+    @constraint(model, y[1,1] ==1)
 
     # Each part can't contain more than maxPartSize elements
     # Note : this seem to add a slight overhead and no real gain.
-    #maxPartSize = boundOnPartsSize(B, w_v)
-    #@constraint(model, [k in 1:K],  sum(y[i,k] for i in 1:n) <= maxPartSize)
+    maxPartSize = boundOnPartsSize(B, w_v)
+    @constraint(model, [k in 1:K],  sum(y[i,k] for i in 1:n) <= maxPartSize)
 
     # Solve
     optimize!(model)
