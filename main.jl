@@ -78,7 +78,9 @@ function solveAllInstances(method::Function = staticSolve, timeLimit::Float64=-1
     end
 
     # Run
-    for fileToRun in DATA_FILES
+    for fileToRun in ["318_lin_3.tsp", "318_lin_6.tsp", "318_lin_9.tsp",
+        "400_rd_3.tsp", "400_rd_6.tsp", "400_rd_9.tsp",
+        "532_att_3.tsp", "532_att_6.tsp", "532_att_9.tsp"]
         updatedDf = runInstanceAndUpdateDataframe(method, currentResults, fileToRun, timeLimit)
         if updatedDf
             CSV.write(filePath, currentResults, delim=";")
