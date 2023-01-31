@@ -7,7 +7,9 @@ include("../../utils/instancesUtils.jl")
 
 """
 include("models/subModels/partWeightsModel.jl")
+start= time()
 computeAndStoreBoundAllFiles("weightBounds2.json")
+println(time() - start)
 """
 function computeBoundAllFiles()::Dict{String, Float64}
     bounds = Dict{String, Float64}()
