@@ -55,7 +55,13 @@ function dualSolve(inputFile::String, showResult::Bool= false, silent::Bool=true
     if timeLimit >= 0
         set_time_limit_sec(model, timeLimit)
     end
-
+    # CPLEX params
+    """
+    set_optimizer_attribute(model, "CPX_PARAM_CLIQUES", 3)
+    set_optimizer_attribute(model, "CPX_PARAM_COVERS", 3)
+    set_optimizer_attribute(model, "CPX_PARAM_ZEROHALFCUTS", 1)
+    set_optimizer_attribute(model, "CPX_PARAM_MIRCUTS", 2)
+    """
     # Variables
     @variable(model, x[i in 1:n, j in i+1:n], Bin)
     @variable(model, y[i in 1:n, k in 1:K], Bin)

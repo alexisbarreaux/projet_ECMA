@@ -36,6 +36,13 @@ function staticSolve(inputFile::String, showResult::Bool= false, silent::Bool=tr
         set_time_limit_sec(model, timeLimit)
     end
 
+    # CPLEX params
+    """
+    set_optimizer_attribute(model, "CPX_PARAM_CLIQUES", 3)
+    set_optimizer_attribute(model, "CPX_PARAM_COVERS", 3)
+    set_optimizer_attribute(model, "CPX_PARAM_ZEROHALFCUTS", 1)
+    set_optimizer_attribute(model, "CPX_PARAM_MIRCUTS", 2)
+    """
     if silent
         set_silent(model)
     end
