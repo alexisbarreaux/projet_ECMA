@@ -41,10 +41,31 @@ dualRelative = DataFrame(instance=String[], optimal=Bool[], relative_difference=
 for instance in dualRes.instance
     dualRow = findfirst(==(instance), dualRes.instance)
     dual5Row = findfirst(==(instance), dual5Res.instance)
-    push!(dualRelative, [instance dualRes[dualRow, :].optimal abs(dualRes[dualRow, :].value - dual5Res[dualRow, :].value)/dualRes[dualRow, :].value])
+    push!(dualRelative, [instance dualRes[dualRow, :].optimal abs(dualRes[dualRow, :].value - dual5Res[dual5Row, :].value)/dualRes[dualRow, :].value])
 end
 filePath =RESULTS_DIR_PATH * "\\" * "dual_relative_30_to_5" * ".csv"
 CSV.write(filePath, dualRelative, delim=";")
+
+filePath =RESULTS_DIR_PATH * "\\" * "dual_cplex_cuts" * ".csv"
+dualCutRes = DataFrame(CSV.File(filePath))
+filePath =RESULTS_DIR_PATH * "\\" * "dual_5" * ".csv"
+dual5Res = DataFrame(CSV.File(filePath))
+dualRelative = DataFrame(instance=String[], optimal=Bool[], difference=Float64[], gap_difference=Float64[])
+for instance in dualCutRes.instance
+    println(instance)
+    dual5Row = findfirst(==(instance), dual5Res.instance)
+    dualCutRow = findfirst(==(instance), dualCutRes.instance)
+    if !(dual5Row==nothing)
+        gapDiff= dual5Res[dual5Row, :].gap - dualCutRes[dualCutRow, :].gap
+        push!(dualRelative, [instance dual5Res[dual5Row, :].optimal (dual5Res[dual5Row, :].value - dualCutRes[dualCutRow, :].value)/dual5Res[dual5Row, :].value gapDiff] )
+    else
+        push!(dualRelative, [instance dualCutRes[dualCutRow, :].optimal dualCutRes[dualCutRow, :].value -1.] )
+    end
+end
+
+filePath =RESULTS_DIR_PATH * "\\" * "dual_cuts_comparison" * ".csv"
+CSV.write(filePath, dualRelative, delim=";")
+
 """
 
 function findUnoptimzedInstance(currentResults::DataFrame)::Tuple{String, Int}
