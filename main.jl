@@ -14,13 +14,37 @@ include("./heuristic/heuristic.jl")
 include("./main.jl")
 staticSolveChosenInstance("30_eil_9.tsp", 5.0)
 solveAllInstances()
-solveAllInstances(staticSolve, 5.0, CUT_RESULTS_FILE)
+solveAllInstances(staticSolve, 5.0, STATIC_RESULTS_FILE)
 solveAllInstances(cutSolve, 5.0, CUT_RESULTS_FILE)
 solveAllInstances(brandAndCutSolve, 5.0, BRANCH_AND_CUT_RESULTS_FILE)
 solveAllInstances(dualSolve, 30.0, DUAL_RESULTS_FILE)
 solveAllHeuristic()
 
 staticSolveUnoptimizedInstance(60.0)
+
+filePath =RESULTS_DIR_PATH * "\\" * "static" * ".csv"
+staticRes = DataFrame(CSV.File(filePath))
+filePath =RESULTS_DIR_PATH * "\\" * "static_5" * ".csv"
+static5Res = DataFrame(CSV.File(filePath))
+sort!(staticRes, [order(:instance)])
+sort!(static5Res, [order(:instance)])
+static5Res.value ./ staticRes.value
+relativeDf = DataFrame(instance=staticRes.instance, optimal=staticRes.optimal, relative_difference=abs.(static5Res.value - staticRes.value) ./ staticRes.value)
+filePath =RESULTS_DIR_PATH * "\\" * "static_relative_30_to_5" * ".csv"
+CSV.write(filePath, relativeDf, delim=";")
+
+filePath =RESULTS_DIR_PATH * "\\" * "dual" * ".csv"
+dualRes = DataFrame(CSV.File(filePath))
+filePath =RESULTS_DIR_PATH * "\\" * "dual_5" * ".csv"
+dual5Res = DataFrame(CSV.File(filePath))
+dualRelative = DataFrame(instance=String[], optimal=Bool[], relative_difference=Float64[])
+for instance in dualRes.instance
+    dualRow = findfirst(==(instance), dualRes.instance)
+    dual5Row = findfirst(==(instance), dual5Res.instance)
+    push!(dualRelative, [instance dualRes[dualRow, :].optimal abs(dualRes[dualRow, :].value - dual5Res[dualRow, :].value)/dualRes[dualRow, :].value])
+end
+filePath =RESULTS_DIR_PATH * "\\" * "dual_relative_30_to_5" * ".csv"
+CSV.write(filePath, dualRelative, delim=";")
 """
 
 function findUnoptimzedInstance(currentResults::DataFrame)::Tuple{String, Int}
