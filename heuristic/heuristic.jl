@@ -387,7 +387,7 @@ function local_search_bis(inputFile::String, solution::Dict{Int,Array})::Dict{In
     start = time()
     _, supplementary_distances, robust_cost, distances = compute_worst_case(inputFile, solution, 1)
     iteration_count = 1
-    change, supplementary_distances, robust_cost = local_search_one_iteration_bis(inputFile, distances, solution, supplementary_distances, robust_cost)
+    change == true
     while change && time() - start < 300
         iteration_count += 1
         change, supplementary_distances, robust_cost = local_search_one_iteration_bis(inputFile, distances, solution, supplementary_distances, robust_cost)
