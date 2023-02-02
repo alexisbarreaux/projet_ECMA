@@ -193,7 +193,7 @@ end
 
 function runHeuristicAndUpdateDataframe(currentResults::DataFrame, fileToRun::String, rowToReplace::Union{Int, Nothing}=nothing)::Bool
     
-    result = run_heuristic(fileToRun)
+    result = run_heuristic(fileToRun) # run_first_heuristic(fileToRun) 
     if result == nothing
         println("NOT FEASIBLE!!")
         return false

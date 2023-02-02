@@ -182,7 +182,7 @@ function run_first_heuristic(inputFile::String)::Union{Nothing, Tuple{Float64, F
             end
         end
     end
-    return compute_worst_case(inputFile, solution)
+    return time() - start, compute_worst_case(inputFile, solution)
 end
 
 function run_heuristic(inputFile::String)::Union{Nothing,Tuple{Float64,Float64}}
