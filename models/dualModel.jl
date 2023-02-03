@@ -4,6 +4,7 @@ using CPLEX
 include("../utils/constants.jl")
 include("../utils/instancesUtils.jl")
 include("../utils/jsonUtils.jl")
+include("../heuristic/heuristic.jl")
 
 """
 include("models/dualModel.jl")
@@ -12,20 +13,6 @@ dualSolve("10_ulysses_3.tsp")
 Solution robuste : {1, 2, 3, 10}, {4, 6, 7, 8}, {5, 9}
 (objectif : 136.995276296)
 """
-
- function solveAndReturnAllInstancesDual()::Dict{String, Float64}
-    dualValues = Dict{String, Float64}()
-    for inputFile in DATA_FILES
-        dualValues[inputFile] = dualSolve(inputFile)
-    end
-    return dualValues
-end
-
-function solveAndStoreAllInstancesDual(resultFile::String=DUAL_RESULTS_FILE)::Nothing
-    dualValues = solveAndReturnAllInstancesDual()
-    filePath =RESULTS_DIR_PATH * "\\" * resultFile
-    jsonDropToFile(filePath, dualValues)
-end
 
 
 function dualSolve(inputFile::String, showResult::Bool= false, silent::Bool=true, timeLimit::Float64=60.0)::Any
@@ -57,6 +44,13 @@ function dualSolve(inputFile::String, showResult::Bool= false, silent::Bool=true
     end
     # CPLEX params
     """
+    heuristicResult = run_first_heuristic(inputFile)
+    if heuristicResult != nothing
+        _, value = heuristicResult
+        set_optimizer_attribute(model, "CPX_PARAM_CUTUP", value)
+        JuMP.set_start_value(x,...)
+        JuMP.set_start_value(y,...)
+    end
     set_optimizer_attribute(model, "CPX_PARAM_CLIQUES", 3)
     set_optimizer_attribute(model, "CPX_PARAM_COVERS", 3)
     set_optimizer_attribute(model, "CPX_PARAM_ZEROHALFCUTS", 1)

@@ -13,21 +13,6 @@ Solution robuste : {1, 2, 3, 10}, {4, 6, 7, 8}, {5, 9}
 (objectif : 136.995276296)
 """
 
-
-function solveAndReturnAllInstancesCuts()::Dict{String, Float64}
-    cutsValues = Dict{String, Float64}()
-    for inputFile in DATA_FILES
-        cutsValues[inputFile] = cutsSolve(inputFile)
-    end
-    return cutsValues
-end
-
-function solveAndStoreAllInstancesStatic(resultFile::String=DUAL_RESULTS_FILE)::Nothing
-    cutsValues = solveAndReturnAllInstancesCuts()
-    filePath =RESULTS_DIR_PATH * "\\" * resultFile
-    jsonDropToFile(filePath, cutsValues)
-end
-
 function firstSubProblem(x_val::Matrix{Float64},n::Int64, l::Matrix{Float64}, lh::Vector{Int64}, L::Int64)::Tuple{Float64, Matrix{Float64}, Float64}
     """
     Function to solve the first sub problem in the current state.
