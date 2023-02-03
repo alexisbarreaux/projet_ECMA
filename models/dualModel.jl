@@ -44,6 +44,14 @@ function dualSolve(inputFile::String, showResult::Bool= false, silent::Bool=true
     end
     # CPLEX params
     """
+    set_optimizer_attribute(model, "CPX_PARAM_CLIQUES", 3)
+    set_optimizer_attribute(model, "CPX_PARAM_COVERS", 3)
+    set_optimizer_attribute(model, "CPX_PARAM_ZEROHALFCUTS", 1)
+    set_optimizer_attribute(model, "CPX_PARAM_MIRCUTS", 2)
+    """
+
+    # Using heuristic
+    """
     heuristicResult = run_first_heuristic(inputFile)
     if heuristicResult != nothing
         _, value = heuristicResult
@@ -51,11 +59,8 @@ function dualSolve(inputFile::String, showResult::Bool= false, silent::Bool=true
         JuMP.set_start_value(x,...)
         JuMP.set_start_value(y,...)
     end
-    set_optimizer_attribute(model, "CPX_PARAM_CLIQUES", 3)
-    set_optimizer_attribute(model, "CPX_PARAM_COVERS", 3)
-    set_optimizer_attribute(model, "CPX_PARAM_ZEROHALFCUTS", 1)
-    set_optimizer_attribute(model, "CPX_PARAM_MIRCUTS", 2)
     """
+
     # Variables
     @variable(model, x[i in 1:n, j in i+1:n], Bin)
     @variable(model, y[i in 1:n, k in 1:K], Bin)

@@ -114,7 +114,7 @@ function solveAllNonOptimalInstances(method::Function = staticSolve, timeLimit::
 end
 
 
-function solveAllHeuristic(resultFile::String=HEURISTICS_RESULTS_FILE)::Nothing
+function solveAllHeuristic(resultFile::String=HEURISTICS_RESULTS_FILE, timeLimit::Float64=-1.)::Nothing
     # Loading
     filePath =RESULTS_DIR_PATH * "\\" * resultFile * ".csv"
     # Get unoptimal instance
@@ -125,8 +125,8 @@ function solveAllHeuristic(resultFile::String=HEURISTICS_RESULTS_FILE)::Nothing
     end
 
     # Run
-    for fileToRun in DATA_FILES
-        updatedDf = runHeuristicAndUpdateDataframe(currentResults, fileToRun)
+    for fileToRun in  DATA_FILES
+        updatedDf = runHeuristicAndUpdateDataframe(currentResults, fileToRun, timeLimit)
         if updatedDf
             CSV.write(filePath, currentResults, delim=";")
         end
@@ -134,9 +134,9 @@ function solveAllHeuristic(resultFile::String=HEURISTICS_RESULTS_FILE)::Nothing
     return 
 end
 
-function runHeuristicAndUpdateDataframe(currentResults::DataFrame, fileToRun::String, rowToReplace::Union{Int, Nothing}=nothing)::Bool
+function runHeuristicAndUpdateDataframe(currentResults::DataFrame, fileToRun::String, timeLimit::Float64, rowToReplace::Union{Int, Nothing}=nothing)::Bool
     
-    result = run_heuristic(fileToRun) # run_first_heuristic(fileToRun) 
+    result = run_heuristic(fileToRun, timeLimit) # run_first_heuristic(fileToRun) 
     if result == nothing
         println("NOT FEASIBLE!!")
         return false

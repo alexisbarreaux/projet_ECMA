@@ -7,6 +7,8 @@ CUT_RESULTS_FILE = "cut"
 BRANCH_AND_CUT_RESULTS_FILE = "branc_and_cut"
 HEURISTICS_RESULTS_FILE = "heuristic"
 
+RESULTS_TABLE_FILE = "resultats"
+
 DATA_DIR_PATH = dirname(UTILS_DIR_PATH) * "\\data"
 DATA_FILES = [
 "10_ulysses_3.tsp", "10_ulysses_6.tsp", "10_ulysses_9.tsp",
