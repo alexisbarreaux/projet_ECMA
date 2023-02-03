@@ -426,3 +426,20 @@ function local_search_ter(inputFile::String, solution::Dict{Int,Array}, timeLimi
     println("Number of Local_search iterations : ", iteration_count, " local search runtime " * string(runTime))
     return solution
 end
+
+function translate_output(inputFile::String, solution::Dict{Int,Array})::Any
+    include(DATA_DIR_PATH * "\\" * inputFile)
+    x = [[0 for _ in 1:n] for _ in 1:n]
+    y = [[0 for _ in 1:K] for _ in 1:n]
+    for (k, cluster_k) in solution
+        for i in cluster_k
+            y[i][k] = 1
+            for j in cluster_k
+                if i < j
+                    x[i][j] = 1
+                end
+            end
+        end
+    end
+    return x, y
+end
