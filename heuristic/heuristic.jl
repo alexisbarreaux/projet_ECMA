@@ -161,7 +161,7 @@ function construct_solution(inputFile::String, mode::Int=0)::Dict{Int,Array}
     return solution
 end
 
-function run_first_heuristic(inputFile::String)::Union{Nothing, Tuple{Float64, Float64}}
+function run_first_heuristic(inputFile::String, warmStart::Bool=false)::Union{Nothing, Dict{Int,Array}, Tuple{Float64, Float64}}
     start = time()
     println("Trying Mode 0")
     solution = construct_solution(inputFile)
@@ -182,7 +182,11 @@ function run_first_heuristic(inputFile::String)::Union{Nothing, Tuple{Float64, F
             end
         end
     end
-    return time() - start, compute_worst_case(inputFile, solution)
+    if warmStart
+        return solution
+    else
+        return time() - start, compute_worst_case(inputFile, solution)
+    end
 end
 
 function run_heuristic(inputFile::String, timeLimit::Float64=-1.)::Union{Nothing,Tuple{Float64,Float64}}
@@ -429,14 +433,14 @@ end
 
 function translate_output(inputFile::String, solution::Dict{Int,Array})::Any
     include(DATA_DIR_PATH * "\\" * inputFile)
-    x = [[0 for _ in 1:n] for _ in 1:n]
-    y = [[0 for _ in 1:K] for _ in 1:n]
+    x = zeros(Int64, n, n)
+    y = zeros(Int64, n, K)
     for (k, cluster_k) in solution
         for i in cluster_k
-            y[i][k] = 1
+            y[i,k] = 1
             for j in cluster_k
                 if i < j
-                    x[i][j] = 1
+                    x[i,j] = 1
                 end
             end
         end
