@@ -71,7 +71,16 @@ function solveAllInstances(method::Function = staticSolve, timeLimit::Float64=-1
     end
 
     # Run
-    for fileToRun in DATA_FILES
+    for fileToRun in [
+        "52_berlin_3.tsp", "52_berlin_6.tsp", "52_berlin_9.tsp",
+        "70_st_3.tsp", "70_st_6.tsp", "70_st_9.tsp", 
+        "80_gr_3.tsp", "80_gr_6.tsp", "80_gr_9.tsp",
+        "100_kroA_3.tsp", "100_kroA_6.tsp", "100_kroA_9.tsp",
+        "202_gr_3.tsp", "202_gr_6.tsp","202_gr_9.tsp",
+        "318_lin_3.tsp", "318_lin_6.tsp", "318_lin_9.tsp",
+        "400_rd_3.tsp", "400_rd_6.tsp", "400_rd_9.tsp",
+        "532_att_3.tsp", "532_att_6.tsp", "532_att_9.tsp",
+        ]
         updatedDf = runInstanceAndUpdateDataframe(method, currentResults, fileToRun, timeLimit)
         if updatedDf
             CSV.write(filePath, currentResults, delim=";")

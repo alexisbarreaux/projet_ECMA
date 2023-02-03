@@ -71,3 +71,23 @@ end
 
 filePath =RESULTS_DIR_PATH * "\\" * "dual_heur_comparison" * ".csv"
 CSV.write(filePath, dualHeurComparison, delim=";")
+
+filePath =RESULTS_DIR_PATH * "\\" * "dual_warm" * ".csv"
+dualWarmRes = DataFrame(CSV.File(filePath))
+filePath =RESULTS_DIR_PATH * "\\" * "dual_5" * ".csv"
+dual5Res = DataFrame(CSV.File(filePath))
+dualRelative = DataFrame(instance=String[], optimal=Bool[], difference=Float64[], gap_difference=Float64[])
+for instance in dual5Res.instance
+    println(instance)
+    dual5Row = findfirst(==(instance), dual5Res.instance)
+    dualWarmRow = findfirst(==(instance), dualWarmRes.instance)
+    if !(dualWarmRow==nothing)
+        gapDiff= dual5Res[dual5Row, :].gap - dualWarmRes[dualWarmRow, :].gap
+        push!(dualRelative, [instance dual5Res[dual5Row, :].optimal (dual5Res[dual5Row, :].value - dualWarmRes[dualWarmRow, :].value)/dual5Res[dual5Row, :].value gapDiff] )
+    else
+        push!(dualRelative, [instance dual5Res[dual5Row, :].optimal dual5Res[dual5Row, :].value -1.] )
+    end
+end
+
+filePath =RESULTS_DIR_PATH * "\\" * "dual_warm_comparison" * ".csv"
+CSV.write(filePath, dualRelative, delim=";")

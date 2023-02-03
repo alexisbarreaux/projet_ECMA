@@ -4,6 +4,7 @@ using CPLEX
 include("../utils/constants.jl")
 include("../utils/instancesUtils.jl")
 include("../utils/jsonUtils.jl")
+
 include("../heuristic/heuristic.jl")
 
 """
@@ -15,7 +16,7 @@ Solution robuste : {1, 2, 3, 10}, {4, 6, 7, 8}, {5, 9}
 """
 
 
-function dualSolve(inputFile::String, showResult::Bool= false, silent::Bool=true, timeLimit::Float64=60.0)::Any
+function dualSolve(inputFile::String, showResult::Bool= false, silent::Bool=true, timeLimit::Float64=60.0, warm::Bool=false)::Any
     """
     The source file includes the following variables:
         - n : number of nodes,
@@ -50,20 +51,26 @@ function dualSolve(inputFile::String, showResult::Bool= false, silent::Bool=true
     set_optimizer_attribute(model, "CPX_PARAM_MIRCUTS", 2)
     """
 
-    # Using heuristic
-    """
-    heuristicResult = run_first_heuristic(inputFile)
-    if heuristicResult != nothing
-        _, value = heuristicResult
-        set_optimizer_attribute(model, "CPX_PARAM_CUTUP", value)
-        JuMP.set_start_value(x,...)
-        JuMP.set_start_value(y,...)
-    end
-    """
-
     # Variables
-    @variable(model, x[i in 1:n, j in i+1:n], Bin)
-    @variable(model, y[i in 1:n, k in 1:K], Bin)
+    if warm
+        solution = run_first_heuristic(inputFile, true)
+        if solution != nothing
+            # Using heuristic
+            x_heur, y_heur = translate_output(inputFile, solution)
+            #_, value = heuristicResult
+            #set_optimizer_attribute(model, "CPX_PARAM_CUTUP", value)
+            @variable(model, x[i=1:n, j=i+1:n], Bin, start=x_heur[i,j])
+            @variable(model, y[i=1:n, k=1:K], Bin, start = y_heur[i,k])
+        else
+            @variable(model, x[i in 1:n, j in i+1:n], Bin)
+            @variable(model, y[i in 1:n, k in 1:K], Bin)
+        end
+    else
+        @variable(model, x[i in 1:n, j in i+1:n], Bin)
+        @variable(model, y[i in 1:n, k in 1:K], Bin)
+    end
+    
+    
     # New constraints added for the dual
     @variable(model, beta[i in 1:n, j in i+1:n] >= 0.)
     @variable(model, alpha >= 0.)
