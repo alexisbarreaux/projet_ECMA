@@ -185,13 +185,17 @@ function run_first_heuristic(inputFile::String)::Union{Nothing, Tuple{Float64, F
     return time() - start, compute_worst_case(inputFile, solution)
 end
 
-function run_heuristic(inputFile::String)::Union{Nothing,Tuple{Float64,Float64}}
-    println("Solving instance ", inputFile)
+function run_heuristic(inputFile::String, timeLimit::Float64=-1.)::Union{Nothing,Tuple{Float64,Float64}}
+    println("Solving instance ", inputFile, " with time limit " * string(timeLimit))
     start = time()
     best_solution = Dict{Int,Array}()
     best_res = -1
     best_mode = -1
     for mode in 0:2
+        if timeLimit > 0 && (time() - start) > timeLimit
+            println("No time left for different mode. Spent time is " * string(time() - start))
+            break
+        end
         solution = construct_solution(inputFile, mode)
         if (check_feasibility(inputFile, solution))
             res = compute_worst_case(inputFile, solution)
@@ -211,7 +215,12 @@ function run_heuristic(inputFile::String)::Union{Nothing,Tuple{Float64,Float64}}
         return
     end
     #println("Mode ", best_mode, " is the best one")
-    solution = local_search_bis(inputFile, best_solution)
+    leftTime = timeLimit - (time() - start)
+    if timeLimit< 0
+        solution = local_search_ter(inputFile, best_solution)
+    else
+        solution = local_search_ter(inputFile, best_solution, leftTime)
+    end
     if !(check_feasibility(inputFile, solution))
         println("Local search result is not feasible for instance ", inputFile)
     end
@@ -322,8 +331,9 @@ function compute_robust_distance_difference(inputFile::String, supplementary_dis
     return new_robust_cost - robust_cost, copy_supplementary_distances
 end
 
-function local_search_one_iteration_bis(inputFile::String, distances::Any, solution::Dict{Int,Array}, supplementary_distances::Vector{Any}, robust_cost::Int)::Any
+function local_search_one_iteration_bis(inputFile::String, distances::Any, solution::Dict{Int,Array}, supplementary_distances::Vector{Any}, robust_cost::Int, timeLimit::Float64=-1.)::Any
     include(DATA_DIR_PATH * "\\" * inputFile)
+    start = time()
     best_static_gap = 0
     best_robust_gap = 0
     best_set_distances = []
@@ -333,6 +343,9 @@ function local_search_one_iteration_bis(inputFile::String, distances::Any, solut
             if a != b
                 for i in 1:length(cluster_a)
                     for j in 1:length(cluster_b)
+                        if timeLimit > 0 && (time() - start) > timeLimit
+                            return false, [], 0
+                        end
                         inter = cluster_a[i]
                         cluster_a[i] = cluster_b[j]
                         cluster_b[j] = inter
@@ -387,11 +400,29 @@ function local_search_bis(inputFile::String, solution::Dict{Int,Array})::Dict{In
     start = time()
     _, supplementary_distances, robust_cost, distances = compute_worst_case(inputFile, solution, 1)
     iteration_count = 1
-    change == true
+    change = true
     while change && time() - start < 300
         iteration_count += 1
         change, supplementary_distances, robust_cost = local_search_one_iteration_bis(inputFile, distances, solution, supplementary_distances, robust_cost)
     end
     println("Number of Local_search iterations : ", iteration_count)
+    return solution
+end
+
+function local_search_ter(inputFile::String, solution::Dict{Int,Array}, timeLimit::Float64)::Dict{Int,Array}
+    include(DATA_DIR_PATH * "\\" * inputFile)
+    println("Local search time limit is " * string(timeLimit))
+    start = time()
+    _, supplementary_distances, robust_cost, distances = compute_worst_case(inputFile, solution, 1)
+    iteration_count = 1
+    change = true
+    runTime = time() - start
+    while change && runTime < timeLimit
+        start = time()
+        iteration_count += 1
+        change, supplementary_distances, robust_cost = local_search_one_iteration_bis(inputFile, distances, solution, supplementary_distances, robust_cost, timeLimit - runTime)
+        runTime += time() - start
+    end
+    println("Number of Local_search iterations : ", iteration_count, " local search runtime " * string(runTime))
     return solution
 end
