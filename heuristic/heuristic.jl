@@ -413,7 +413,7 @@ function local_search_bis(inputFile::String, solution::Dict{Int,Array})::Dict{In
     return solution
 end
 
-function local_search_ter(inputFile::String, solution::Dict{Int,Array}, timeLimit::Float64)::Dict{Int,Array}
+function local_search_ter(inputFile::String, solution::Dict{Int,Array}, timeLimit::Float64=-1.)::Dict{Int,Array}
     include(DATA_DIR_PATH * "\\" * inputFile)
     println("Local search time limit is " * string(timeLimit))
     start = time()
@@ -421,7 +421,7 @@ function local_search_ter(inputFile::String, solution::Dict{Int,Array}, timeLimi
     iteration_count = 1
     change = true
     runTime = time() - start
-    while change && runTime < timeLimit
+    while change && (timeLimit < 0 || runTime < timeLimit)
         start = time()
         iteration_count += 1
         change, supplementary_distances, robust_cost = local_search_one_iteration_bis(inputFile, distances, solution, supplementary_distances, robust_cost, timeLimit - runTime)
