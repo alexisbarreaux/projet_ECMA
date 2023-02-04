@@ -53,7 +53,7 @@ function resultsTable()
 
         # Get best bound and best feasible
         bestBound = -1.
-        bestFeasible = -1.
+        bestFeasible =1e63
         oneOpt = false
         # Dual
         if dualRow != nothing
@@ -99,7 +99,7 @@ function resultsTable()
         # B&cut
         if branchRow != nothing
             results[i, "Branch_time"] = string(round(branchRes[branchRow, "time"], digits=2)) *"s"
-            bestFeasible = max(branchRes[branchRow, "value"], bestFeasible)
+            bestFeasible = min(branchRes[branchRow, "value"], bestFeasible)
             if bestBound != -1.
                 results[i, "Branch_gap"] = string(round(100*((branchRes[branchRow, "value"]/bestBound) - 1), digits=1)) * "%"
             end
@@ -108,7 +108,7 @@ function resultsTable()
         # Cuts
         if cutRow != nothing
             results[i, "Plans_time"] = string(round(cutRes[cutRow, "time"], digits=2)) *"s"
-            bestFeasible = max(cutRes[cutRow, "value"], bestFeasible)
+            bestFeasible = min(cutRes[cutRow, "value"], bestFeasible)
             if bestBound != -1.
                 results[i, "Plans_gap"] = string(round(100*((cutRes[cutRow, "value"]/bestBound) - 1), digits=1)) * "%"
             end
@@ -117,7 +117,7 @@ function resultsTable()
         # Heuristic first
         if heurRow != nothing
             results[i, "Heur_time"] = string(round(heurRes[heurRow, "time"], digits=2)) *"s"
-            bestFeasible = max(heurRes[heurRow, "value"], bestFeasible)
+            bestFeasible = min(heurRes[heurRow, "value"], bestFeasible)
             if bestBound != -1.
                 results[i, "Heur_gap"] = string(round(100*((heurRes[heurRow, "value"]/bestBound) - 1), digits=1)) * "%"
             end
@@ -126,7 +126,7 @@ function resultsTable()
         # Heuristic local
         if heurLocalRow != nothing
             results[i, "Heur_local_time"] = string(round(heurLocalRes[heurLocalRow, "time"], digits=2)) *"s"
-            bestFeasible = max(heurLocalRes[heurLocalRow, "value"], bestFeasible)
+            bestFeasible = min(heurLocalRes[heurLocalRow, "value"], bestFeasible)
             if bestBound != -1.
                 results[i, "Heur_local_gap"] = string(round(100*((heurLocalRes[heurLocalRow, "value"]/bestBound) - 1), digits=1)) * "%"
             end
@@ -135,7 +135,10 @@ function resultsTable()
         # PR
         # TODO faire une autre colonne quand on sait pas
         if staticRow != nothing
-            prValue = string(round(100*(bestFeasible/staticRes[staticRow, "value"]), digits=1))
+            if instance == "400_rd_6.tsp"
+                println(bestFeasible, " ", staticRes[staticRow, "value"])
+            end
+            prValue = string(round(100*(bestFeasible/staticRes[staticRow, "value"]  - 1), digits=1))
             if staticRes[staticRow, "optimal"]
                 if oneOpt
                     results[i, "PR"] = prValue* "%"
