@@ -98,7 +98,9 @@ function staticSolve(inputFile::String, showResult::Bool= false, silent::Bool=tr
                     end
                 end
             end
-            println("Found parts are : ", createdParts)
+            for k in 1:K 
+                println("Part " *  string(k) * " " * string(createdParts[k]))
+            end
         end
         return isOptimal, solveTime, value, gap
     else

@@ -118,7 +118,9 @@ function dualSolve(inputFile::String, showResult::Bool= false, silent::Bool=true
                     end
                 end
             end
-            println("Found parts are : ", createdParts)
+            for k in 1:K 
+                println("Part " *  string(k) * " " * string(createdParts[k]))
+            end
         end
         return isOptimal, solveTime, value, gap
     else
