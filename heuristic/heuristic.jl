@@ -333,25 +333,27 @@ function local_search_one_iteration_bis(inputFile::String, distances::Any, solut
             if a != b
                 for i in 1:length(cluster_a)
                     for j in 1:length(cluster_b)
-                        inter = cluster_a[i]
-                        cluster_a[i] = cluster_b[j]
-                        cluster_b[j] = inter
-                        if (compute_worst_weight_sort(inputFile, cluster_a) <= B) && (compute_worst_weight_sort(inputFile, cluster_b) <= B)
+                        if i < j
                             inter = cluster_a[i]
                             cluster_a[i] = cluster_b[j]
                             cluster_b[j] = inter
-                            static_gap = compute_static_distance_difference(distances, cluster_a, cluster_b, i, j)
-                            robust_gap, set_distances = compute_robust_distance_difference(inputFile, supplementary_distances, robust_cost, cluster_a, cluster_b, i, j)
-                            if (static_gap + robust_gap < best_static_gap + best_robust_gap)
-                                best_static_gap = static_gap
-                                best_robust_gap = robust_gap
-                                best_set_distances = set_distances
-                                best_switch = (a, b, i, j)
+                            if (compute_worst_weight_sort(inputFile, cluster_a) <= B) && (compute_worst_weight_sort(inputFile, cluster_b) <= B)
+                                inter = cluster_a[i]
+                                cluster_a[i] = cluster_b[j]
+                                cluster_b[j] = inter
+                                static_gap = compute_static_distance_difference(distances, cluster_a, cluster_b, i, j)
+                                robust_gap, set_distances = compute_robust_distance_difference(inputFile, supplementary_distances, robust_cost, cluster_a, cluster_b, i, j)
+                                if (static_gap + robust_gap < best_static_gap + best_robust_gap)
+                                    best_static_gap = static_gap
+                                    best_robust_gap = robust_gap
+                                    best_set_distances = set_distances
+                                    best_switch = (a, b, i, j)
+                                end
+                            else
+                                inter = cluster_a[i]
+                                cluster_a[i] = cluster_b[j]
+                                cluster_b[j] = inter
                             end
-                        else
-                            inter = cluster_a[i]
-                            cluster_a[i] = cluster_b[j]
-                            cluster_b[j] = inter
                         end
                     end
                 end
