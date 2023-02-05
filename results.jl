@@ -135,9 +135,6 @@ function resultsTable()
         # PR
         # TODO faire une autre colonne quand on sait pas
         if staticRow != nothing
-            if instance == "400_rd_6.tsp"
-                println(bestFeasible, " ", staticRes[staticRow, "value"])
-            end
             prValue = string(round(100*(bestFeasible/staticRes[staticRow, "value"]  - 1), digits=1))
             if staticRes[staticRow, "optimal"]
                 if oneOpt
